@@ -1176,7 +1176,7 @@
 // ══════════════════════════════════════════════
 //  PROXY SERVER CONFIG
 // ══════════════════════════════════════════════
-const PROXY = 'http://localhost:3001';
+const PROXY = window.location.origin;
 
 async function callProxy(endpoint, body = {}) {
   const res = await fetch(`${PROXY}${endpoint}`, {
@@ -1706,7 +1706,7 @@ async function testConnection() {
   if (!proxyOk) {
     div.innerHTML = `<div class="alert alert-error" style="margin-top:12px">
       ❌ <strong>Proxy server is offline.</strong><br>
-      Open a terminal in the proxy folder and run: <code style="background:#1b1a19;color:#fff;padding:2px 6px;border-radius:2px">node server.js</code>
+      Server may be starting up. Please wait and refresh, or check Render deployment logs.
     </div>`;
     return;
   }
@@ -1783,7 +1783,7 @@ async function syncOdoo() {
   const proxyOk = await checkProxy();
   if (!proxyOk) {
     bar.classList.remove('active');
-    showToast('❌ Proxy server offline — run: node server.js in your terminal', 'error');
+    showToast('❌ Server not responding — please refresh the page or check Render deployment logs', 'error');
     return;
   }
 
