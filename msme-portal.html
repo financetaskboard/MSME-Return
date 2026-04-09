@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MSME Return Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --primary: #0078d4;
+    --primary-dark: #005a9e;
+    --primary-light: #deecf9;
+    --accent: #107c10;
+    --accent-orange: #d83b01;
+    --accent-yellow: #ffb900;
+    --bg: #f3f2f1;
+    --surface: #ffffff;
+    --surface2: #faf9f8;
+    --border: #e1dfdd;
+    --border2: #c8c6c4;
+    --text: #201f1e;
+    --text2: #605e5c;
+    --text3: #a19f9d;
+    --shell-bg: #1b1a19;
+    --shell-text: #ffffff;
+    --nav-bg: #0078d4;
+    --tab-active: #0078d4;
+    --danger: #a4262c;
+    --warning: #d83b01;
+    --success: #107c10;
+    --radius: 2px;
+    --shadow: 0 1.6px 3.6px rgba(0,0,0,.132), 0 .3px .9px rgba(0,0,0,.108);
+    --shadow-md: 0 6.4px 14.4px rgba(0,0,0,.132), 0 1.2px 3.6px rgba(0,0,0,.108);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* ── Shell / Top Bar ── */
+  .shell { background: var(--shell-bg); height: 48px; min-height: 48px; display: flex; align-items: center; padding: 0 0 0 0; gap: 0; z-index: 1000; flex-shrink: 0; }
+  .shell-brand { width: 240px; min-width: 240px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-right: 1px solid #2d2c2b; height: 100%; background: #1b1a19; }
+  .shell-logo { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; font-weight: 700; letter-spacing: .3px; }
+  .shell-logo svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .shell-logo-sub { color: #8a8886; font-size: 11px; font-weight: 400; margin-top: 1px; }
+  .shell-main { flex: 1; display: flex; align-items: center; padding: 0 16px; gap: 12px; }
+  .shell-divider { width: 1px; height: 20px; background: #484644; }
+  .shell-app { color: #c8c6c4; font-size: 13px; }
+  .shell-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .shell-period-badge { background: #d83b01; color: #fff; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 10px; letter-spacing: .5px; }
+  .odoo-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8a8886; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #484644; transition: background .3s; flex-shrink: 0; }
+  .status-dot.connected { background: var(--success); }
+  .status-dot.connecting { background: var(--accent-yellow); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .shell-user { display: flex; align-items: center; gap: 8px; color: #c8c6c4; font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: var(--radius); }
+  .shell-user:hover { background: #2d2c2b; }
+  .shell-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+
+  /* ── App Body: Sidebar + Content ── */
+  .app-body { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── Left Sidebar ── */
+  .sidebar { width: 240px; min-width: 240px; background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+  .sidebar-cmd { padding: 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .nav-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); padding: 12px 16px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all .12s; color: var(--text2); font-size: 13px; position: relative; }
+  .nav-item:hover { background: var(--primary-light); color: var(--primary); border-left-color: #c7e0f4; }
+  .nav-item.active { background: #deecf9; color: var(--primary); font-weight: 600; border-left-color: var(--primary); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .8; }
+  .nav-item.active svg { opacity: 1; }
+  .nav-badge { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; background: var(--primary); color: #fff; border-radius: 10px; font-size: 10px; font-weight: 700; min-width: 20px; height: 20px; padding: 0 5px; }
+  .nav-item:not(.active) .nav-badge { background: #c8c6c4; }
+  .sidebar-footer { border-top: 1px solid var(--border); padding: 12px; }
+  .sidebar-footer-info { font-size: 11px; color: var(--text3); padding: 4px 0; }
+
+  /* ── Command Buttons ── */
+  .cmd-btn { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: none; background: transparent; color: var(--text); font-size: 13px; cursor: pointer; border-radius: var(--radius); transition: background .15s; white-space: nowrap; width: 100%; text-align: left; }
+  .cmd-btn:hover { background: var(--primary-light); color: var(--primary); }
+  .cmd-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .cmd-btn.primary { background: var(--primary); color: #fff; }
+  .cmd-btn.primary:hover { background: var(--primary-dark); }
+  .cmd-btn.danger { color: var(--danger); }
+  .cmd-btn.danger:hover { background: #fde7e9; }
+  .cmd-sep { height: 1px; background: var(--border); margin: 4px 0; }
+  .cmd-right { margin-left: auto; }
+
+  /* ── Right Content Panel ── */
+  .content-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .content-topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 44px; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
+  .content-topbar-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .content-topbar-actions { display: flex; align-items: center; gap: 6px; }
+  .topbar-btn { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); font-size: 12px; cursor: pointer; border-radius: var(--radius); transition: all .15s; white-space: nowrap; font-family: inherit; }
+  .topbar-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .topbar-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .topbar-btn.primary:hover { background: var(--primary-dark); }
+  .topbar-btn svg { width: 14px; height: 14px; }
+  .topbar-sep { width: 1px; height: 20px; background: var(--border); }
+
+  /* ── Page Content ── */
+  .page { padding: 20px 24px; display: none; flex: 1; overflow-y: auto; overflow-x: hidden; }
+  .page.active { display: block; }
+
+  /* ── Section Header ── */
+  .section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+  .section-title { font-size: 18px; font-weight: 600; color: var(--text); }
+  .section-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ── Info Cards ── */
+  .info-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .info-card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--text3); margin-bottom: 6px; }
+  .info-card-value { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1; }
+  .info-card-value.blue { color: var(--primary); }
+  .info-card-value.green { color: var(--success); }
+  .info-card-value.red { color: var(--danger); }
+  .info-card-value.orange { color: var(--warning); }
+  .info-card-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* ── Filter Bar ── */
+  .filter-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; box-shadow: var(--shadow); }
+  .filter-group { display: flex; align-items: center; gap: 8px; }
+  .filter-label { font-size: 12px; font-weight: 600; color: var(--text2); white-space: nowrap; }
+  .fl-input { height: 30px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); font-size: 13px; padding: 0 10px; border-radius: var(--radius); outline: none; transition: border-color .15s; font-family: inherit; }
+  .fl-input:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+  .fl-select { height: 30px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); font-size: 13px; padding: 0 28px 0 10px; border-radius: var(--radius); outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23605e5c'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; cursor: pointer; font-family: inherit; }
+  .fl-select:focus { border-color: var(--primary); }
+  .filter-bar .cmd-btn { height: 30px; }
+
+  /* ── Data Table ── */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow-x: auto; overflow-y: hidden; }
+  .data-table { width: 100%; min-width: 1600px; border-collapse: collapse; font-size: 13px; }
+  .data-table thead { background: #f3f2f1; }
+  .data-table th { padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text2); border-bottom: 2px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; background: #f3f2f1; z-index: 2; }
+  .data-table th:hover { background: var(--primary-light); color: var(--primary); }
+  .data-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #f8f7f6; }
+  .data-table tr.selected td { background: var(--primary-light); }
+  .sno { color: var(--text3); font-size: 11px; width: 40px; }
+  .cb { width: 32px; }
+  .data-table input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+
+  /* ── Badges / Tags ── */
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; letter-spacing: .3px; white-space: nowrap; }
+  .badge-micro { background: #dff6dd; color: #107c10; }
+  .badge-small { background: #deecf9; color: #0078d4; }
+  .badge-medium { background: #fff4ce; color: #7a4f00; }
+  .badge-reg { background: #dff6dd; color: #107c10; }
+  .badge-unreg { background: #fde7e9; color: #a4262c; }
+  .badge-overdue { background: #fde7e9; color: #a4262c; }
+  .badge-paid { background: #dff6dd; color: #107c10; }
+  .badge-partial { background: #fff4ce; color: #7a4f00; }
+  .badge-pending { background: #f3f2f1; color: #605e5c; }
+
+  /* ── Action Buttons in Table ── */
+  .tbl-action { display: flex; align-items: center; gap: 4px; }
+  .icon-btn { width: 28px; height: 28px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
+  .icon-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .icon-btn svg { width: 14px; height: 14px; }
+
+  /* ── Pagination ── */
+  .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface2); border-top: 1px solid var(--border); font-size: 12px; color: var(--text2); }
+  .page-btns { display: flex; gap: 4px; }
+  .page-btn { height: 26px; min-width: 26px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); border-radius: var(--radius); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+  .page-btn:hover { background: var(--primary-light); color: var(--primary); }
+  .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* ── Modal / Panel ── */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 2000; }
+  .overlay.open { display: flex; align-items: center; justify-content: center; }
+  .modal { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-md); width: 560px; max-width: 95vw; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-close { width: 28px; height: 28px; border: none; background: transparent; font-size: 18px; cursor: pointer; color: var(--text2); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: var(--border); }
+  .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+  .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group.full { grid-column: 1/-1; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text2); }
+  .form-input { height: 32px; border: 1px solid var(--border2); padding: 0 10px; border-radius: var(--radius); font-size: 13px; font-family: inherit; color: var(--text); outline: none; }
+  .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+  .form-select { height: 32px; border: 1px solid var(--border2); padding: 0 28px 0 10px; border-radius: var(--radius); font-size: 13px; font-family: inherit; color: var(--text); outline: none; appearance: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23605e5c'/%3E%3C/svg%3E") no-repeat right 10px center var(--surface); }
+
+  /* ── Odoo Config Panel ── */
+  .config-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .config-panel-header { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .alert { padding: 10px 14px; border-radius: var(--radius); font-size: 13px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 8px; }
+  .alert-info { background: var(--primary-light); color: var(--primary-dark); border-left: 3px solid var(--primary); }
+  .alert-warning { background: #fff4ce; color: #7a4f00; border-left: 3px solid var(--accent-yellow); }
+  .alert-error { background: #fde7e9; color: var(--danger); border-left: 3px solid var(--danger); }
+  .alert-success { background: #dff6dd; color: var(--success); border-left: 3px solid var(--success); }
+
+  /* ── Period Selector ── */
+  .period-selector { display: flex; gap: 8px; }
+  .period-btn { padding: 6px 16px; border: 1px solid var(--border2); background: var(--surface); color: var(--text2); font-size: 13px; border-radius: var(--radius); cursor: pointer; font-family: inherit; transition: all .15s; }
+  .period-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .period-btn:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+
+  /* ── Payment Breakdown Tooltip ── */
+  .pay-cell { cursor: pointer; color: var(--primary); text-decoration: underline dotted; }
+  .pay-breakdown { display: none; position: absolute; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 12px; width: 320px; z-index: 500; font-size: 12px; }
+  .pay-breakdown table { width: 100%; border-collapse: collapse; }
+  .pay-breakdown th { font-size: 10px; text-transform: uppercase; color: var(--text3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+  .pay-breakdown td { padding: 4px 6px; border-bottom: 1px solid var(--border); }
+  .pay-breakdown tr:last-child td { border: none; }
+  .relative { position: relative; }
+  .relative:hover .pay-breakdown { display: block; }
+
+  /* ── Empty State ── */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: .4; }
+  .empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── Loading ── */
+  .loading-bar { height: 3px; background: var(--primary-light); position: relative; overflow: hidden; border-radius: 0; display: none; flex-shrink: 0; }
+  .loading-bar.active { display: block; }
+  .loading-bar::after { content: ''; position: absolute; left: -40%; width: 40%; height: 100%; background: var(--primary); animation: load 1.2s infinite ease; border-radius: 2px; }
+  @keyframes load { 0%{left:-40%} 100%{left:100%} }
+
+  /* ── Toast ── */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+  .toast { background: var(--shell-bg); color: #fff; padding: 12px 16px; border-radius: var(--radius); font-size: 13px; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 10px; min-width: 280px; animation: slideIn .2s ease; }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  .toast.info { border-left: 3px solid var(--primary); }
+  @keyframes slideIn { from{transform:translateX(40px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+  /* ── Amount formatting ── */
+  .amt { font-family: 'Courier New', monospace; font-size: 13px; text-align: right; }
+  .amt.cr { color: var(--success); }
+  .amt.dr { color: var(--danger); }
+
+  /* ── Tab: MSME Working specific ── */
+  .working-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ── Responsive ── */
+  @media(max-width:768px) {
+    .page { padding: 12px; }
+    .info-cards { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .shell-app { display: none; }
+    .data-table { font-size: 12px; }
+    .data-table th, .data-table td { padding: 8px 10px; }
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  .tag-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--primary-light); color: var(--primary); font-size: 11px; padding: 2px 8px; border-radius: 10px; margin: 1px; }
+
+  /* ── Filter Bar Toggle ── */
+  .filter-bar.hidden { display: none !important; }
+  .filter-toggle-btn { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); font-size: 12px; cursor: pointer; border-radius: var(--radius); transition: all .15s; white-space: nowrap; font-family: inherit; }
+  .filter-toggle-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .filter-toggle-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .filter-toggle-btn svg { width: 14px; height: 14px; }
+  /* ── Per-page selector ── */
+  .perpage-wrap { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .perpage-wrap select { height: 26px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); font-size: 12px; padding: 0 6px; border-radius: var(--radius); font-family: inherit; cursor: pointer; }
+  /* ── Frozen header ── */
+  .table-scroll { overflow-x: auto; overflow-y: auto; max-height: 58vh; }
+  .table-scroll .data-table thead th { position: sticky; top: 0; z-index: 2; background: #f3f2f1; }
+
+  /* ── Sidebar Collapse ── */
+  .sidebar { transition: width .2s ease, min-width .2s ease; }
+  .sidebar.collapsed { width: 0 !important; min-width: 0 !important; overflow: hidden; border-right: none; }
+  .shell-brand { transition: width .2s ease, min-width .2s ease; cursor: pointer; }
+  .shell-brand:hover { background: #2d2c2b; }
+  .shell-brand .collapse-hint { font-size:10px; color:#484644; margin-left:auto; }
+  /* ── Filter bar compact ── */
+  .filter-bar { padding: 8px 12px !important; flex-wrap: nowrap !important; gap: 8px !important; }
+  .filter-bar .filter-label { display: none; }
+  /* ── Search-above-table bar ── */
+  .table-search-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .table-search-bar .fl-input { height: 30px; border: 1px solid var(--border2); background: #fff; color: var(--text); font-size: 13px; padding: 0 10px; border-radius: var(--radius); outline: none; width: 260px; font-family: inherit; }
+  .table-search-bar .fl-input:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+  .table-search-bar .search-icon { position: relative; }
+  .table-search-bar .search-icon svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text3); pointer-events: none; }
+  .table-search-bar .fl-input.with-icon { padding-left: 28px; }
+  .legend-inline { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+  .legend-inline .legend-item { font-size: 11px; display: flex; align-items: center; gap: 5px; }
+  .legend-inline .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* ── MSME Return Table ── */
+  #returnTable td { padding: 7px 10px; border: 1px solid #e1dfdd; vertical-align: middle; }
+  #returnTable tbody tr:hover td { background: rgba(0,120,212,.04) !important; }
+  #returnTable tfoot td { padding: 8px 10px; font-weight: 700; font-size: 12px; background: #f3f2f1; border: 1px solid #c8c6c4; }
+</style>
+</head>
+<body>
+
+<!-- ░░ SHELL ░░ -->
+<div class="shell">
+  <div class="shell-brand" onclick="toggleSidebar()" title="Toggle sidebar">
+    <div class="shell-logo">
+      <svg viewBox="0 0 20 20" fill="none">
+        <rect x="1" y="1" width="8" height="8" fill="#f25022"/>
+        <rect x="11" y="1" width="8" height="8" fill="#7fba00"/>
+        <rect x="1" y="11" width="8" height="8" fill="#00a4ef"/>
+        <rect x="11" y="11" width="8" height="8" fill="#ffb900"/>
+      </svg>
+      <div>
+        <div>MSME Portal</div>
+        <div class="shell-logo-sub">India Compliance Suite</div>
+      </div>
+    </div>
+  </div>
+  <div class="shell-main">
+    <span class="shell-period-badge" id="activePeriodBadge">FY 2024-25 | H1</span>
+    <div class="odoo-status" style="margin-left:8px">
+      <div class="status-dot" id="odooStatusDot"></div>
+      <span id="odooStatusText" style="color:#8a8886;font-size:12px">Not Connected</span>
+    </div>
+    <div class="shell-right">
+      <div class="shell-user" onclick="openSettings()">
+        <div class="shell-avatar" id="userInitials">AD</div>
+        <span id="userName">Admin</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ APP BODY ░░ -->
+<div class="app-body">
+
+  <!-- ░░ LEFT SIDEBAR ░░ -->
+  <div class="sidebar">
+    <div class="sidebar-cmd">
+      <button class="cmd-btn primary" onclick="syncOdoo()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
+        Sync from Odoo
+      </button>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Modules</div>
+
+      <div class="nav-item active" id="nav-msme-db" onclick="switchTab('msme-db')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z"/></svg>
+        MSME Database
+        <span class="nav-badge" id="cnt-msme">0</span>
+      </div>
+
+      <div class="nav-item" id="nav-vendor-master" onclick="switchTab('vendor-master')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
+        Vendor Master
+        <span class="nav-badge" id="cnt-vendor">0</span>
+      </div>
+
+      <div class="nav-item" id="nav-msme-working" onclick="switchTab('msme-working')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M9 5H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2zm-1 2v4h1V7H8zm3 0v4h1V7h-1z"/><path d="M5 1a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v1h1V3a2 2 0 0 0-2-2H5z"/></svg>
+        MSME Working
+        <span class="nav-badge" id="cnt-working">0</span>
+      </div>
+
+      <div class="nav-item" id="nav-payments" onclick="switchTab('payments')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7zm-6 2h4a.5.5 0 0 1 0 1H9a.5.5 0 0 1 0-1zm0 2h4a.5.5 0 0 1 0 1H9a.5.5 0 0 1 0-1zM3 9.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/></svg>
+        Payments
+        <span class="nav-badge" id="cnt-payments">0</span>
+      </div>
+
+      <div class="nav-item" id="nav-msme-return" onclick="switchTab('msme-return')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/><path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5z"/></svg>
+        MSME Return
+      </div>
+      <div class="nav-item" id="nav-msme1-draft" onclick="switchTab('msme1-draft')">        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M9.5 1.5A.5.5 0 0 0 9 1H3.5A1.5 1.5 0 0 0 2 2.5v11A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5v-8a.5.5 0 0 0-.146-.354L9.854 1.646A.5.5 0 0 0 9.5 1.5zm0 1.707L12.793 6.5H9.5V3.207zM3.5 14a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H8.5V7a.5.5 0 0 0 .5.5h3.5v6a.5.5 0 0 1-.5.5h-8.5z"/></svg>
+        MSME-1 Draft
+      </div>
+
+      <div class="nav-section-label" style="margin-top:12px">Actions</div>
+
+      <div class="nav-item" onclick="exportCSV()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+        Export CSV
+      </div>
+
+      <div class="nav-item" onclick="exportMSME1()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a.5.5 0 0 1 .5.5V12h2.793l-1.147-1.146a.5.5 0 0 1 .708-.708l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L11.293 13H8.5v.5a.5.5 0 0 1-1 0V2.5A.5.5 0 0 1 8 2z"/><path d="M3 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H4v8h3.5a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5v-9z"/></svg>
+        Draft MSME-1
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="cmd-btn" onclick="openSettings()" style="color:var(--text2)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.892 3.433-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.892-1.64-.901-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.474l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/></svg>
+        Odoo Settings
+      </button>
+      <button class="cmd-btn danger" onclick="if(confirm('Clear all saved data and start fresh?')) { clearSavedState(); location.reload(); }" style="font-size:12px">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+        Clear Saved Data
+      </button>
+      <div class="sidebar-footer-info" id="lastSavedInfo">v1.0.0 · MSME Portal · India</div>
+    </div>
+  </div>
+
+  <!-- ░░ RIGHT CONTENT PANEL ░░ -->
+  <div class="content-panel">
+    <div id="loadingBar" class="loading-bar"></div>
+
+<!-- ══════════════════════════════════════════════
+     TAB 1 : MSME DATABASE
+══════════════════════════════════════════════ -->
+<div class="content-topbar" id="topbar-msme-db">
+  <div class="content-topbar-title">📦 MSME Database</div>
+  <div class="content-topbar-actions">
+    <button class="filter-toggle-btn" id="filterToggleMsme" onclick="toggleFilter('msme')" style="border-color:var(--border2)"><svg viewBox="0 0 16 16" fill="currentColor" style="width:14px;height:14px"><path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/></svg> Filters</button>
+    <div class="topbar-sep"></div>
+    <button class="topbar-btn primary" onclick="openAddMSME()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a.5.5 0 0 1 .5.5V7.5H13a.5.5 0 0 1 0 1H8.5V13a.5.5 0 0 1-1 0V8.5H3a.5.5 0 0 1 0-1h4.5V2.5A.5.5 0 0 1 8 2z"/></svg>
+      Add Vendor
+    </button>
+    <button class="topbar-btn" onclick="exportCSV()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+      Export CSV
+    </button>
+  </div>
+</div>
+<div class="page active" id="tab-msme-db">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Vendor MSME Registration Records</div>
+      <div class="section-desc">Sync from Odoo. Edit MSME type and Udyam number here.</div>
+    </div>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <div class="info-card-label">Total MSME Vendors</div>
+      <div class="info-card-value blue" id="stat-total">0</div>
+      <div class="info-card-sub">Registered in database</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Micro</div>
+      <div class="info-card-value green" id="stat-micro">0</div>
+      <div class="info-card-sub">Covered u/s 43B(h)</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Small</div>
+      <div class="info-card-value blue" id="stat-small">0</div>
+      <div class="info-card-sub">Covered u/s 43B(h)</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Medium</div>
+      <div class="info-card-value orange" id="stat-medium">0</div>
+      <div class="info-card-sub">Not covered — excluded</div>
+    </div>
+  </div>
+
+  <div class="filter-bar hidden" id="filterBarMsme">
+    <select class="fl-select" id="msmeTypeFilter" onchange="filterMSME()" style="height:28px">
+      <option value="">All Types</option>
+      <option value="Micro">Micro</option>
+      <option value="Small">Small</option>
+      <option value="Medium">Medium</option>
+    </select>
+    <select class="fl-select" id="msmeStatusFilter" onchange="filterMSME()" style="height:28px">
+      <option value="">All Status</option>
+      <option value="Registered">Registered</option>
+      <option value="Unregistered">Unregistered</option>
+    </select>
+    <button class="topbar-btn" onclick="clearFilters('msme')" style="height:28px;font-size:11px">✕ Clear</button>
+  </div>
+
+  <div class="table-search-bar">
+    <div class="search-icon" style="position:relative">
+      <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg></span>
+      <input type="text" class="fl-input" placeholder="Search vendor / Udyam No…" id="msmeSearch" oninput="filterMSME()" style="width:280px;padding-left:28px"/>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+    <table class="data-table" id="msmeTable">
+      <thead>
+        <tr>
+          <th class="cb"><input type="checkbox" id="selectAllMSME" onchange="selectAll('msme',this)"/></th>
+          <th class="sno">#</th>
+          <th onclick="sortTable('msme','vendor_name')">Vendor Name ↕</th>
+          <th onclick="sortTable('msme','vendor_code')">Vendor Code ↕</th>
+          <th onclick="sortTable('msme','pan')">PAN ↕</th>
+          <th onclick="sortTable('msme','msme_status')">MSME Status ↕</th>
+          <th onclick="sortTable('msme','msme_type')">MSME Type ↕</th>
+          <th>Udyam / MSME No.</th>
+          <th>Registered Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="msmeBody"></tbody>
+    </table>
+    </div><!-- /table-scroll -->
+    <div id="msmeEmpty" class="empty-state" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 13V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7m16 0v5a2 2 0 0 0-2 2H6a2 2 0 0 0-2-2v-5m16 0H4"/></svg>
+      <h3>No MSME records found</h3>
+      <p>Sync from Odoo or add vendors manually</p>
+    </div>
+    <div class="pagination">
+      <div class="perpage-wrap">Show <select id="perpageSel" onchange="changePageSize(this.value)"><option value="15">15</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select> rows</div>
+      <span id="msmePageInfo">Showing 0 of 0 records</span>
+      <div class="page-btns" id="msmePager"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB 2 : VENDOR MASTER
+══════════════════════════════════════════════ -->
+<div class="content-topbar" id="topbar-vendor-master" style="display:none">
+  <div class="content-topbar-title">👥 Vendor Master</div>
+  <div class="content-topbar-actions">
+    <button class="filter-toggle-btn" id="filterToggleVendor" onclick="toggleFilter('vendor')" style="border-color:var(--border2)"><svg viewBox="0 0 16 16" fill="currentColor" style="width:14px;height:14px"><path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/></svg> Filters</button>
+    <div class="topbar-sep"></div>
+    <button class="topbar-btn" onclick="syncOdoo()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
+      Refresh from Odoo
+    </button>
+    <button class="topbar-btn" onclick="exportCSV()">Export CSV</button>
+  </div>
+</div>
+<div class="page" id="tab-vendor-master">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Complete Vendor Directory</div>
+      <div class="section-desc">All vendors fetched from Odoo with MSME classification.</div>
+    </div>
+  </div>
+
+  <div class="filter-bar hidden" id="filterBarVendor">
+    <select class="fl-select" id="vendorTypeFilter" onchange="filterVendor()" style="height:28px">
+      <option value="">All Types</option>
+      <option value="Micro">Micro</option>
+      <option value="Small">Small</option>
+      <option value="Medium">Medium</option>
+      <option value="Not MSME">Not MSME</option>
+    </select>
+    <select class="fl-select" id="vendorStateFilter" onchange="filterVendor()" style="height:28px">
+      <option value="">All States</option>
+    </select>
+    <button class="topbar-btn" onclick="clearFilters('vendor')" style="height:28px;font-size:11px">✕ Clear</button>
+  </div>
+
+  <div class="table-search-bar">
+    <div class="search-icon" style="position:relative">
+      <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg></span>
+      <input type="text" class="fl-input" placeholder="Search name / PAN / Code…" id="vendorSearch" oninput="filterVendor()" style="width:280px;padding-left:28px"/>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+    <table class="data-table" id="vendorTable">
+      <thead>
+        <tr>
+          <th class="cb"><input type="checkbox" onchange="selectAll('vendor',this)"/></th>
+          <th class="sno">#</th>
+          <th onclick="sortTable('vendor','vendor_name')">Vendor Name ↕</th>
+          <th onclick="sortTable('vendor','vendor_code')">Vendor Code ↕</th>
+          <th>PAN</th>
+          <th>GSTIN</th>
+          <th>MSME Type</th>
+          <th>Udyam No.</th>
+          <th>State</th>
+          <th>Contact</th>
+          <th>Payment Terms</th>
+        </tr>
+      </thead>
+      <tbody id="vendorBody"></tbody>
+    </table>
+    </div><!-- /table-scroll -->
+    <div id="vendorEmpty" class="empty-state" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+      <h3>No vendors found</h3>
+      <p>Connect to Odoo and sync vendor master</p>
+    </div>
+    <div class="pagination">
+      <div class="perpage-wrap">Show <select id="perpageSel" onchange="changePageSize(this.value)"><option value="15">15</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select> rows</div>
+      <span id="vendorPageInfo">Showing 0 of 0 records</span>
+      <div class="page-btns" id="vendorPager"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB 3 : MSME WORKING
+══════════════════════════════════════════════ -->
+<div class="content-topbar" id="topbar-msme-working" style="display:none">
+  <div class="content-topbar-title">📊 MSME Working — Bill-wise Outstanding</div>
+  <div class="content-topbar-actions">
+    <button class="filter-toggle-btn" id="filterToggleWorking" onclick="toggleFilter('working')" style="border-color:var(--border2)"><svg viewBox="0 0 16 16" fill="currentColor" style="width:14px;height:14px"><path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/></svg> Filters</button>
+    <div class="topbar-sep"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;color:var(--text2);font-weight:600">Period:</span>
+      <div class="period-selector">
+        <button class="period-btn active" id="periodBtn1" onclick="selectPeriod('H1')">30 Sep · Apr–Sep (H1)</button>
+        <button class="period-btn" id="periodBtn2" onclick="selectPeriod('H2')">31 Mar · Oct–Mar (H2)</button>
+      </div>
+      <select class="fl-select" id="fySelect" onchange="recalcWorking()" style="height:28px;font-size:12px">
+        <option value="2024-25">FY 2024-25</option>
+        <option value="2023-24">FY 2023-24</option>
+        <option value="2025-26">FY 2025-26</option>
+      </select>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="working-legend" style="display:flex;gap:12px;align-items:center">
+      <div class="legend-item"><div class="legend-dot" style="background:#fde7e9;width:10px;height:10px;border-radius:50%;display:inline-block"></div> <span style="font-size:11px;color:var(--text2)">Overdue</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fff4ce;width:10px;height:10px;border-radius:50%;display:inline-block"></div> <span style="font-size:11px;color:var(--text2)">Partial</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#dff6dd;width:10px;height:10px;border-radius:50%;display:inline-block"></div> <span style="font-size:11px;color:var(--text2)">Paid</span></div>
+    </div>
+    <div class="topbar-sep"></div>
+    <button class="topbar-btn" onclick="exportCSV()">Export CSV</button>
+    <button class="topbar-btn primary" onclick="exportMSME1()">Draft MSME-1</button>
+  </div>
+</div>
+<div class="page" id="tab-msme-working">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Bill-wise Outstanding Analysis</div>
+      <div class="section-desc">Micro & Small MSME vendors only. Medium excluded. Payment reconciliation & 43B(h) disallowance calculated per bill.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-warning">
+    <svg viewBox="0 0 16 16" fill="currentColor" style="width:16px;height:16px;flex-shrink:0"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+    <span><strong>Important:</strong> Only Micro & Small MSME vendors are included. Payment beyond 45 days from bill acceptance date is disallowable u/s 43B(h). Multiple payments per bill are reconciled individually.</span>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <div class="info-card-label">Total Bills</div>
+      <div class="info-card-value blue" id="w-total-bills">0</div>
+      <div class="info-card-sub">Micro + Small vendors</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Total Bill Amount</div>
+      <div class="info-card-value" id="w-total-amt" style="font-size:18px">₹0</div>
+      <div class="info-card-sub">Gross payable</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Total Paid</div>
+      <div class="info-card-value green" id="w-total-paid" style="font-size:18px">₹0</div>
+      <div class="info-card-sub">Across all payments</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Outstanding</div>
+      <div class="info-card-value red" id="w-total-outstanding" style="font-size:18px">₹0</div>
+      <div class="info-card-sub">Unpaid as on date</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Disallowable (43B-h)</div>
+      <div class="info-card-value red" id="w-disallowable" style="font-size:18px">₹0</div>
+      <div class="info-card-sub">Paid/unpaid beyond 45 days</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Overdue Bills</div>
+      <div class="info-card-value orange" id="w-overdue-count">0</div>
+      <div class="info-card-sub">Beyond 45-day limit</div>
+    </div>
+  </div>
+
+  <div class="filter-bar hidden" id="filterBarWorking">
+    <select class="fl-select" id="workingTypeFilter" onchange="filterWorking()" style="height:28px">
+      <option value="">Micro + Small</option>
+      <option value="Micro">Micro Only</option>
+      <option value="Small">Small Only</option>
+    </select>
+    <select class="fl-select" id="workingStatusFilter" onchange="filterWorking()" style="height:28px">
+      <option value="">All Status</option>
+      <option value="Overdue">Overdue (&gt;45d)</option>
+      <option value="Partial">Partial</option>
+      <option value="Unpaid">Unpaid</option>
+      <option value="Paid">Paid</option>
+    </select>
+    <button class="topbar-btn" onclick="clearFilters('working')" style="height:28px;font-size:11px">✕ Clear</button>
+  </div>
+
+  <div class="table-search-bar">
+    <div class="search-icon" style="position:relative">
+      <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg></span>
+      <input type="text" class="fl-input" placeholder="Search vendor / bill no / ref…" id="workingSearch" oninput="filterWorking()" style="width:280px;padding-left:28px"/>
+    </div>
+    <div class="legend-inline" style="margin-left:auto;display:flex;align-items:center;gap:14px">
+      <span class="legend-item"><span class="legend-dot" style="background:#fde7e9;width:10px;height:10px;border-radius:50%;display:inline-block"></span> <span style="font-size:11px;color:var(--text2)">Overdue &gt;45d</span></span>
+      <span class="legend-item"><span class="legend-dot" style="background:#fff4ce;width:10px;height:10px;border-radius:50%;display:inline-block"></span> <span style="font-size:11px;color:var(--text2)">Partial</span></span>
+      <span class="legend-item"><span class="legend-dot" style="background:#dff6dd;width:10px;height:10px;border-radius:50%;display:inline-block"></span> <span style="font-size:11px;color:var(--text2)">Paid</span></span>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+    <table class="data-table" id="workingTable">
+      <thead>
+        <tr>
+          <th class="cb"><input type="checkbox" onchange="selectAll('working',this)"/></th>
+          <th class="sno">#</th>
+          <th>Vendor Name</th>
+          <th>MSME Type</th>
+          <th>Bill No.</th>
+          <th>Reference No.</th>
+          <th>Bill Date</th>
+          <th>Due Date (45d)</th>
+          <th style="text-align:right">Bill Amount (₹)</th>
+          <th>Payment Dates</th>
+          <th>Delay Period</th>
+          <th style="text-align:right">Total Paid (₹)</th>
+          <th style="text-align:right">Outstanding (₹)</th>
+          <th>Status</th>
+          <th style="text-align:center">Odoo Link</th>
+        </tr>
+      </thead>
+      <tbody id="workingBody"></tbody>
+    </table>
+    </div><!-- /table-scroll -->
+    <div id="workingEmpty" class="empty-state" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+      <h3>No bills found for this period</h3>
+      <p>Select a period and sync from Odoo to load bills</p>
+    </div>
+    <div class="pagination">
+      <div class="perpage-wrap">Show <select id="perpageSel" onchange="changePageSize(this.value)"><option value="15">15</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select> rows</div>
+      <span id="workingPageInfo">Showing 0 of 0 records</span>
+      <div class="page-btns" id="workingPager"></div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- PAYMENTS TAB -->
+<div class="content-topbar" id="topbar-payments" style="display:none">
+  <div class="content-topbar-title">&#x1F4B3; Payment Details &mdash; Vendor-wise</div>
+  <div class="content-topbar-actions">
+    <button class="topbar-btn" onclick="exportPaymentsCSV()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+      Export CSV
+    </button>
+  </div>
+</div>
+<div class="page" id="tab-payments">
+  <div class="section-header">
+    <div>
+      <div class="section-title">All Vendor Payment Details</div>
+      <div class="section-desc">Each row represents a single payment. Multiple payments per invoice are listed separately.</div>
+    </div>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <div class="info-card-label">Total Payment Entries</div>
+      <div class="info-card-value blue" id="pay-total-rows">0</div>
+      <div class="info-card-sub">Individual payment rows</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Total Paid Amount</div>
+      <div class="info-card-value green" id="pay-total-amt" style="font-size:18px">&#x20B9;0</div>
+      <div class="info-card-sub">Sum of all payments</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Unique Vendors</div>
+      <div class="info-card-value blue" id="pay-vendors">0</div>
+      <div class="info-card-sub">Vendors with payments</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-label">Unique Bills</div>
+      <div class="info-card-value orange" id="pay-bills">0</div>
+      <div class="info-card-sub">Bills with payments</div>
+    </div>
+  </div>
+
+  <div class="table-search-bar">
+    <div class="search-icon" style="position:relative">
+      <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      </span>
+      <input type="text" class="fl-input" placeholder="Search vendor / bill no..." id="paymentSearch" oninput="filterPayments()" style="width:280px;padding-left:28px"/>
+    </div>
+    <select class="fl-select" id="paymentVendorFilter" onchange="filterPayments()" style="height:30px;margin-left:8px">
+      <option value="">All Vendors</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table class="data-table" id="paymentsTable">
+        <thead>
+          <tr>
+            <th class="sno" style="width:55px">S.No.</th>
+            <th style="min-width:220px">Name of Vendor</th>
+            <th style="min-width:170px">Bill No.</th>
+            <th style="min-width:140px">Payment Date</th>
+            <th style="min-width:160px;text-align:right">Payment Amount (&#x20B9;)</th>
+          </tr>
+        </thead>
+        <tbody id="paymentsBody"></tbody>
+        <tfoot id="paymentsFoot" style="display:none">
+          <tr style="background:#f3f2f1;font-weight:700">
+            <td colspan="4" style="padding:8px 10px;text-align:right;border-top:2px solid #999;font-size:12px">GRAND TOTAL</td>
+            <td style="padding:8px 10px;text-align:right;border-top:2px solid #999;font-size:13px;color:var(--success);font-family:monospace" id="pay-foot-total">&#x20B9;0</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div id="paymentsEmpty" class="empty-state" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3z"/></svg>
+      <h3>No payment entries found</h3>
+      <p>Sync from Odoo or add working data to see payment entries here</p>
+    </div>
+    <div class="pagination">
+      <div class="perpage-wrap">Show <select id="paymentPageSel" onchange="changePaymentPageSize(this.value)"><option value="15">15</option><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="500">All</option></select> rows</div>
+      <span id="paymentPageInfo">Showing 0 of 0 records</span>
+      <div class="page-btns" id="paymentPager"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: MSME RETURN
+══════════════════════════════════════════════ -->
+<div class="content-topbar" id="topbar-msme-return" style="display:none">
+  <div class="content-topbar-title">📋 MSME Return — Vendor-wise Summary</div>
+  <div class="content-topbar-actions">
+    <button class="topbar-btn" onclick="generateMSMEReturn()">
+      <svg viewBox="0 0 16 16" fill="currentColor" style="width:14px;height:14px"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
+      Refresh from Working
+    </button>
+    <div class="topbar-sep"></div>
+    <button class="topbar-btn" onclick="exportMSMEReturnCSV()">
+      <svg viewBox="0 0 16 16" fill="currentColor" style="width:14px;height:14px"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+      Export CSV
+    </button>
+  </div>
+</div>
+
+<div class="page" id="tab-msme-return">
+  <div class="section-header">
+    <div>
+      <div class="section-title">MSME Return — Vendor-wise Payment Summary</div>
+      <div class="section-desc">Auto-populated from MSME Working data. Columns (d) &amp; (e) as per MCA MSME-1 format. TReDS left blank.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-info" style="margin-bottom:16px">
+    <svg viewBox="0 0 16 16" fill="currentColor" style="width:16px;height:16px;flex-shrink:0"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+    <span><strong>Layout per MCA Format:</strong> (a) S.No. &nbsp;|&nbsp; (b) Vendor Name &nbsp;|&nbsp; (c) PAN &nbsp;|&nbsp; (d) Paid within 45 days – Other mode [No. of invoices + Amount] &nbsp;|&nbsp; (e) Paid after 45 days [No. + Amount] &nbsp;|&nbsp; (f) Outstanding ≤45 days &nbsp;|&nbsp; (g) Outstanding &gt;45 days &nbsp;|&nbsp; (h) Reason. TReDS columns left blank.</span>
+  </div>
+
+  <div class="table-search-bar" style="margin-bottom:8px">
+    <div style="position:relative">
+      <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none">
+        <svg viewBox="0 0 16 16" fill="currentColor" style="width:14px;height:14px"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      </span>
+      <input type="text" class="fl-input" placeholder="Search vendor / PAN…" id="returnSearch" oninput="filterMSMEReturn()" style="width:280px;padding-left:28px"/>
+    </div>
+    <span style="font-size:12px;color:var(--text2);margin-left:12px" id="returnCount"></span>
+  </div>
+
+  <div class="table-wrap">
+    <!-- MSME Return: fixed 3-level header + scrollable body -->
+    <div id="returnHeaderWrap" style="overflow:hidden;border-bottom:2px solid #333">
+      <table id="returnHeaderTable" style="width:100%;table-layout:fixed;border-collapse:collapse;font-size:11px;font-family:inherit">
+        <colgroup>
+          <col style="width:46px"/>   <!-- a: S.No -->
+          <col style="width:200px"/>  <!-- b: Name -->
+          <col style="width:115px"/>  <!-- c: PAN -->
+          <col style="width:52px"/>   <!-- d-i TReDS No -->
+          <col style="width:90px"/>   <!-- d-i TReDS Amt -->
+          <col style="width:52px"/>   <!-- d-ii Other No -->
+          <col style="width:110px"/>  <!-- d-ii Other Amt -->
+          <col style="width:52px"/>   <!-- e No -->
+          <col style="width:110px"/>  <!-- e Amt -->
+          <col style="width:52px"/>   <!-- f No -->
+          <col style="width:110px"/>  <!-- f Amt -->
+          <col style="width:52px"/>   <!-- g No -->
+          <col style="width:110px"/>  <!-- g Amt -->
+          <col style="width:145px"/>  <!-- h Reason -->
+        </colgroup>
+        <thead>
+          <!-- ROW 1: Group headers -->
+          <tr>
+            <th rowspan="3" style="background:#1b1a19;color:#fff;padding:6px 8px;text-align:center;vertical-align:middle;border:1px solid #444;font-size:10px;font-weight:700">(a)<br/>S.No.</th>
+            <th rowspan="3" style="background:#1b1a19;color:#fff;padding:6px 8px;text-align:left;vertical-align:middle;border:1px solid #444;font-size:10px;font-weight:700">(b)<br/>Name of MSE Supplier</th>
+            <th rowspan="3" style="background:#1b1a19;color:#fff;padding:6px 8px;text-align:left;vertical-align:middle;border:1px solid #444;font-size:10px;font-weight:700">(c)<br/>PAN of Supplier</th>
+            <th colspan="4" style="background:#0c3b6e;color:#fff;padding:6px 8px;text-align:center;border:1px solid #1a5aaa;font-size:11px;font-weight:700">(d) &nbsp; Paid within 45 days</th>
+            <th colspan="2" style="background:#7a1b0d;color:#fff;padding:6px 8px;text-align:center;border:1px solid #a02010;font-size:11px;font-weight:700">(e) &nbsp; Paid after 45 days</th>
+            <th colspan="2" style="background:#4a4200;color:#ffe07a;padding:6px 8px;text-align:center;border:1px solid #6a6000;font-size:11px;font-weight:700">(f) &nbsp; Outstanding ≤ 45 days</th>
+            <th colspan="2" style="background:#6b0a0a;color:#ffb3b3;padding:6px 8px;text-align:center;border:1px solid #900;font-size:11px;font-weight:700">(g) &nbsp; Outstanding &gt; 45 days</th>
+            <th rowspan="3" style="background:#1b1a19;color:#fff;padding:6px 8px;text-align:left;vertical-align:middle;border:1px solid #444;font-size:10px;font-weight:700">(h)<br/>Reason for Delay</th>
+          </tr>
+          <!-- ROW 2: Sub-group headers -->
+          <tr>
+            <th colspan="2" style="background:#1c3d5e;color:#aaccee;padding:4px 8px;text-align:center;border:1px solid #2a5080;font-size:10px;font-style:italic">Through TReDS (i)<br/><span style="font-size:9px;color:#7aaacc">— Left Blank —</span></th>
+            <th colspan="2" style="background:#0e4890;color:#fff;padding:4px 8px;text-align:center;border:1px solid #1a5aaa;font-size:10px;font-weight:600">Other Mode of Payment (ii)</th>
+            <th colspan="2" style="background:#6b1509;color:#ffccc8;padding:4px 8px;text-align:center;border:1px solid #a02010;font-size:9px"></th>
+            <th colspan="2" style="background:#4a4200;color:#ffe07a;padding:4px 8px;text-align:center;border:1px solid #6a6000;font-size:9px"></th>
+            <th colspan="2" style="background:#6b0a0a;color:#ffb3b3;padding:4px 8px;text-align:center;border:1px solid #900;font-size:9px"></th>
+          </tr>
+          <!-- ROW 3: No. / Amount labels -->
+          <tr>
+            <th style="background:#1c3d5e;color:#7aaacc;padding:4px 8px;text-align:right;border:1px solid #2a5080;font-size:10px">No.</th>
+            <th style="background:#1c3d5e;color:#7aaacc;padding:4px 8px;text-align:right;border:1px solid #2a5080;font-size:10px">Amount (₹)</th>
+            <th style="background:#0e4890;color:#d0e8ff;padding:4px 8px;text-align:right;border:1px solid #1a5aaa;font-size:10px;font-weight:600">No.</th>
+            <th style="background:#0e4890;color:#d0e8ff;padding:4px 8px;text-align:right;border:1px solid #1a5aaa;font-size:10px;font-weight:600">Amount (₹)</th>
+            <th style="background:#6b1509;color:#ffccc8;padding:4px 8px;text-align:right;border:1px solid #a02010;font-size:10px;font-weight:600">No.</th>
+            <th style="background:#6b1509;color:#ffccc8;padding:4px 8px;text-align:right;border:1px solid #a02010;font-size:10px;font-weight:600">Amount (₹)</th>
+            <th style="background:#4a4200;color:#ffe07a;padding:4px 8px;text-align:right;border:1px solid #6a6000;font-size:10px;font-weight:600">No.</th>
+            <th style="background:#4a4200;color:#ffe07a;padding:4px 8px;text-align:right;border:1px solid #6a6000;font-size:10px;font-weight:600">Amount (₹)</th>
+            <th style="background:#6b0a0a;color:#ffb3b3;padding:4px 8px;text-align:right;border:1px solid #900;font-size:10px;font-weight:600">No.</th>
+            <th style="background:#6b0a0a;color:#ffb3b3;padding:4px 8px;text-align:right;border:1px solid #900;font-size:10px;font-weight:600">Amount (₹)</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+    <!-- Scrollable body -->
+    <div id="returnBodyWrap" style="overflow-x:auto;overflow-y:auto;max-height:55vh">
+      <table id="returnTable" style="width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px;font-family:inherit">
+        <colgroup>
+          <col style="width:46px"/>
+          <col style="width:200px"/>
+          <col style="width:115px"/>
+          <col style="width:52px"/>
+          <col style="width:90px"/>
+          <col style="width:52px"/>
+          <col style="width:110px"/>
+          <col style="width:52px"/>
+          <col style="width:110px"/>
+          <col style="width:52px"/>
+          <col style="width:110px"/>
+          <col style="width:52px"/>
+          <col style="width:110px"/>
+          <col style="width:145px"/>
+        </colgroup>
+        <tbody id="returnBody">
+          <tr><td colspan="14" style="text-align:center;color:var(--text3);padding:40px;border:1px solid var(--border)">
+            Click <strong>Refresh from Working</strong> or switch to this tab to auto-load data
+          </td></tr>
+        </tbody>
+        <tfoot id="returnFoot" style="display:none">
+          <tr style="background:#f3f2f1;font-weight:700;font-size:12px">
+            <td colspan="3" style="padding:7px 10px;text-align:right;border-top:2px solid #999;border:1px solid #c8c6c4">TOTAL</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#7aaacc" id="ft-treds-no">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#7aaacc" id="ft-treds-amt">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#0078d4" id="ft-d2-no">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#0078d4" id="ft-d2-amt">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#c00" id="ft-e-no">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#c00" id="ft-e-amt">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#b86800" id="ft-f-no">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#b86800" id="ft-f-amt">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#c00" id="ft-g-no">—</td>
+            <td style="text-align:right;border:1px solid #c8c6c4;color:#c00" id="ft-g-amt">—</td>
+            <td style="border:1px solid #c8c6c4"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    </div>
+    <div class="pagination" style="border-top:1px solid var(--border)">
+      <div class="perpage-wrap">Show <select id="returnPageSel" onchange="renderMSMEReturn()"><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="500">All</option></select> rows</div>
+      <span id="returnPageInfo" style="font-size:12px;color:var(--text2)">0 vendors</span>
+      <div class="page-btns" id="returnPager"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB 4 : MSME-1 DRAFT
+══════════════════════════════════════════════ -->
+<div class="content-topbar" id="topbar-msme1-draft" style="display:none">
+  <div class="content-topbar-title">📄 MSME-1 Draft Filing</div>
+  <div class="content-topbar-actions">
+    <button class="topbar-btn primary" onclick="generateMSME1()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+      Generate MSME-1 Report
+    </button>
+  </div>
+</div>
+<div class="page" id="tab-msme1-draft">
+  <div class="section-header">
+    <div>
+      <div class="section-title">MCA Form MSME-1</div>
+      <div class="section-desc">Half-yearly return of outstanding dues to Micro and Small enterprises.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <svg viewBox="0 0 16 16" fill="currentColor" style="width:16px;height:16px;flex-shrink:0"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+    <span>MSME-1 is filed half-yearly: <strong>April 30</strong> (for Oct–Mar period) and <strong>October 31</strong> (for Apr–Sep period). This draft helps you prepare the data before filing on MCA portal.</span>
+  </div>
+
+  <div id="msme1Content">
+    <div class="config-panel">
+      <div class="config-panel-header">
+        <svg viewBox="0 0 16 16" fill="currentColor" style="width:16px;height:16px"><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z"/></svg>
+        Company Details for MSME-1
+      </div>
+      <div class="config-grid">
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" class="form-input" id="m1CompanyName" placeholder="Registered company name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CIN</label>
+          <input type="text" class="form-input" id="m1CIN" placeholder="Corporate Identity Number"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PAN</label>
+          <input type="text" class="form-input" id="m1PAN" placeholder="Company PAN"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Period</label>
+          <select class="form-select" id="m1Period">
+            <option value="H1-2025-26">April 2025 – September 2025</option>
+            <option value="H2-2025-26">October 2025 – March 2026</option>
+            <option value="H1-2024-25">April 2024 – September 2024</option>
+            <option value="H2-2024-25">October 2024 – March 2025</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap" id="msme1TableWrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name of Supplier</th>
+            <th>PAN of Supplier</th>
+            <th>Udyam Registration No.</th>
+            <th>MSME Type</th>
+            <th style="text-align:right">Amount of Outstanding Dues (₹)</th>
+            <th>Date from which Due</th>
+            <th>Reason for Delay</th>
+          </tr>
+        </thead>
+        <tbody id="msme1Body">
+          <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">Click "Generate MSME-1 Report" to populate data from MSME Working tab</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+  </div><!-- end tab-msme1-draft -->
+  </div><!-- end content-panel -->
+</div><!-- end app-body -->
+
+<!-- ══ MODAL: ODOO SETTINGS ══ -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal" style="width:620px">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ Odoo Connection Settings</div>
+      <button class="modal-close" onclick="closeModal('settingsOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info" style="margin-bottom:16px">
+        Connect this portal to your Odoo instance via XML-RPC or JSON-RPC API. Your API Key is stored in browser localStorage.
+      </div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Odoo Server URL</label>
+          <input type="text" class="form-input" id="odooUrl" placeholder="https://yourcompany.odoo.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Database Name</label>
+          <input type="text" class="form-input" id="odooDB" placeholder="your_db_name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username (Email)</label>
+          <input type="text" class="form-input" id="odooUsername" placeholder="admin@company.com"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">API Key / Password</label>
+          <input type="password" class="form-input" id="odooApiKey" placeholder="Your Odoo API Key"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">MSME Tag Name in Odoo</label>
+          <input type="text" class="form-input" id="odooMsmeTag" placeholder="MSME" value="MSME"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Agreement Type (days)</label>
+          <select class="form-select" id="agreementDays">
+            <option value="45">45 days (Written Agreement)</option>
+            <option value="15">15 days (No Agreement)</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Company / User Display Name</label>
+          <input type="text" class="form-input" id="settingUserName" placeholder="Your Name / Company Short Name"/>
+        </div>
+      </div>
+      <div id="connectionTestResult"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="cmd-btn" onclick="testConnection()">Test Connection</button>
+      <button class="cmd-btn primary" onclick="saveSettings()">Save Settings</button>
+      <button class="cmd-btn" onclick="closeModal('settingsOverlay')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: EDIT MSME ══ -->
+<div class="overlay" id="editMSMEOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="editMSMETitle">Edit MSME Vendor</div>
+      <button class="modal-close" onclick="closeModal('editMSMEOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Vendor Name</label>
+          <input type="text" class="form-input" id="editVendorName" readonly style="background:#f3f2f1"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">MSME Status</label>
+          <select class="form-select" id="editMsmeStatus">
+            <option value="Registered">Registered</option>
+            <option value="Unregistered">Unregistered</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">MSME Type</label>
+          <select class="form-select" id="editMsmeType">
+            <option value="Micro">Micro</option>
+            <option value="Small">Small</option>
+            <option value="Medium">Medium</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Udyam Registration No.</label>
+          <input type="text" class="form-input" id="editUdyamNo" placeholder="UDYAM-XX-00-0000000"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Registration Date</label>
+          <input type="date" class="form-input" id="editRegDate"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certificate Expiry</label>
+          <input type="date" class="form-input" id="editExpiry"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Remarks</label>
+          <input type="text" class="form-input" id="editRemarks" placeholder="Optional notes"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cmd-btn primary" onclick="saveMSMEEdit()">Save Changes</button>
+      <button class="cmd-btn" onclick="closeModal('editMSMEOverlay')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: PAYMENT DETAIL ══ -->
+<div class="overlay" id="paymentDetailOverlay">
+  <div class="modal" style="width:640px">
+    <div class="modal-header">
+      <div class="modal-title" id="payDetailTitle">Payment Breakdown</div>
+      <button class="modal-close" onclick="closeModal('paymentDetailOverlay')">✕</button>
+    </div>
+    <div class="modal-body" id="payDetailBody"></div>
+    <div class="modal-footer">
+      <button class="cmd-btn" onclick="closeModal('paymentDetailOverlay')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST CONTAINER ══ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  PROXY SERVER CONFIG
+// ══════════════════════════════════════════════
+const PROXY = 'http://localhost:3001';
+
+async function callProxy(endpoint, body = {}) {
+  const res = await fetch(`${PROXY}${endpoint}`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function checkProxy() {
+  try {
+    const res = await fetch(`${PROXY}/health`);
+    if (res.ok) {
+      document.getElementById('odooStatusDot').classList.add('connected');
+      document.getElementById('odooStatusText').textContent = 'Proxy Connected';
+      return true;
+    }
+  } catch (e) {}
+  document.getElementById('odooStatusDot').classList.remove('connected');
+  document.getElementById('odooStatusText').textContent = 'Proxy Offline';
+  return false;
+}
+const state = {
+  odoo: { url:'', db:'', username:'', apiKey:'', msmeTag:'MSME', agreementDays:45 },
+  connected: false,
+  currentPeriod: 'H1',
+  currentFY: '2024-25',
+  msmeData: [],
+  vendorData: [],
+  workingData: [],
+  editingMSMEId: null,
+  msmeFilter: [], vendorFilter: [], workingFilter: [],
+  msmePage: 1, vendorPage: 1, workingPage: 1,
+  pageSize: 15
+};
+
+// ══════════════════════════════════════════════
+//  DEMO / MOCK DATA
+// ══════════════════════════════════════════════
+function loadMockData() {
+  const restored = loadStateFromStorage();
+  if (!restored) {
+    state.msmeData   = [];
+    state.vendorData = [];
+    state.workingData = [];
+  }
+  updateStats();
+  renderMSME(); renderVendor(); renderWorking(); renderPayments();
+}
+
+function makeBill(id, vendor, type, billNo, refNo, billDate, acctDate, amt, payments, cutoff) {
+  const bd = new Date(billDate);
+  const dueDate = new Date(bd); dueDate.setDate(dueDate.getDate() + 45);
+  const totalPaid = payments.reduce((s,p) => s + p.amount, 0);
+  const outstanding = amt - totalPaid;
+  const daysOverdue = Math.max(0, Math.floor((cutoff - dueDate) / 86400000));
+
+  // disallowable = payments made after due date + outstanding
+  let disallowable = outstanding > 0 ? outstanding : 0;
+  payments.forEach(p => {
+    if(new Date(p.date) > dueDate) disallowable += p.amount;
+  });
+  disallowable = Math.min(disallowable, amt);
+
+  let status = 'Paid';
+  if(outstanding > 0 && totalPaid === 0) status = 'Unpaid';
+  else if(outstanding > 0) status = 'Partial';
+  if(outstanding > 0 && daysOverdue > 0) status = 'Overdue';
+  if(outstanding === 0 && payments.some(p => new Date(p.date) > dueDate)) status = 'Late-Paid';
+
+  return { id, vendor_name:vendor, msme_type:type, bill_no:billNo, ref_no:refNo,
+    bill_date:billDate, acct_date:acctDate, due_date:dueDate.toISOString().split('T')[0],
+    bill_amount:amt, payments, total_paid:totalPaid, outstanding, days_overdue:daysOverdue,
+    status, disallowable };
+}
+
+function updateStats() {
+  const d = state.msmeData;
+  document.getElementById('stat-total').textContent = d.length;
+  document.getElementById('stat-micro').textContent = d.filter(v=>v.msme_type==='Micro').length;
+  document.getElementById('stat-small').textContent = d.filter(v=>v.msme_type==='Small').length;
+  document.getElementById('stat-medium').textContent = d.filter(v=>v.msme_type==='Medium').length;
+  document.getElementById('cnt-msme').textContent = d.length;
+  document.getElementById('cnt-vendor').textContent = state.vendorData.length;
+
+  const w = state.workingData;
+  document.getElementById('cnt-working').textContent = w.length;
+  document.getElementById('w-total-bills').textContent = w.length;
+  document.getElementById('w-total-amt').textContent = '₹'+fmt(w.reduce((s,b)=>s+b.bill_amount,0));
+  document.getElementById('w-total-paid').textContent = '₹'+fmt(w.reduce((s,b)=>s+b.total_paid,0));
+  document.getElementById('w-total-outstanding').textContent = '₹'+fmt(w.reduce((s,b)=>s+b.outstanding,0));
+  document.getElementById('w-disallowable').textContent = '₹'+fmt(w.reduce((s,b)=>s+b.disallowable,0));
+  document.getElementById('w-overdue-count').textContent = w.filter(b=>b.days_overdue>0&&b.outstanding>0).length;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER TABLES
+// ══════════════════════════════════════════════
+function renderMSME() {
+  const search = document.getElementById('msmeSearch').value.toLowerCase();
+  const typeF = document.getElementById('msmeTypeFilter').value;
+  const statusF = document.getElementById('msmeStatusFilter').value;
+
+  let data = state.msmeData.filter(v => {
+    const s = (v.vendor_name+v.vendor_code+(v.pan||'')+(v.udyam_no||'')+(v.gstin||'')).toLowerCase();
+    return (!search || s.includes(search))
+      && (!typeF || v.msme_type === typeF)
+      && (!statusF || v.msme_status === statusF);
+  });
+  state.msmeFilter = data;
+
+  const start = (state.msmePage-1)*state.pageSize;
+  const page = data.slice(start, start+state.pageSize);
+  const tbody = document.getElementById('msmeBody');
+
+  tbody.innerHTML = page.map((v,i) => `
+    <tr>
+      <td class="cb"><input type="checkbox" class="row-cb"/></td>
+      <td class="sno">${start+i+1}</td>
+      <td><strong>${v.vendor_name}</strong></td>
+      <td style="color:var(--text2);font-size:12px">${v.vendor_code}</td>
+      <td style="font-family:monospace;font-size:12px">${v.pan||'<span style="color:var(--text3)">—</span>'}</td>
+      <td><span class="badge ${v.msme_status==='Registered'?'badge-reg':'badge-unreg'}">${v.msme_status}</span></td>
+      <td><span class="badge ${v.msme_type==='Micro'?'badge-micro':v.msme_type==='Small'?'badge-small':'badge-medium'}">${v.msme_type}</span></td>
+      <td style="font-family:monospace;font-size:11px">${v.udyam_no||'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:12px;color:var(--text2)">${v.reg_date||'—'}</td>
+      <td>
+        <div class="tbl-action">
+          <button class="icon-btn" title="Edit" onclick="openEditMSME(${v.id})">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708L12.854.146zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/></svg>
+          </button>
+          <button class="icon-btn" title="View Bills" onclick="viewVendorBills('${v.vendor_name}')">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  document.getElementById('msmeEmpty').style.display = data.length ? 'none' : 'block';
+  document.getElementById('msmePageInfo').textContent = `Showing ${page.length} of ${data.length} records`;
+  renderPager('msme', data.length);
+}
+
+function renderVendor() {
+  const search = document.getElementById('vendorSearch').value.toLowerCase();
+  const typeF = document.getElementById('vendorTypeFilter').value;
+  const stateF = document.getElementById('vendorStateFilter').value;
+
+  let data = state.vendorData.filter(v => {
+    const s = (v.vendor_name+v.vendor_code+(v.pan||'')+(v.gstin||'')).toLowerCase();
+    return (!search || s.includes(search))
+      && (!typeF || v.msme_type === typeF)
+      && (!stateF || v.state === stateF);
+  });
+
+  const states = [...new Set(state.vendorData.map(v=>v.state))];
+  const sel = document.getElementById('vendorStateFilter');
+  if(sel.options.length <= 1) states.forEach(s => {
+    const o = document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o);
+  });
+
+  const start = (state.vendorPage-1)*state.pageSize;
+  const page = data.slice(start, start+state.pageSize);
+  const tbody = document.getElementById('vendorBody');
+
+  tbody.innerHTML = page.map((v,i) => `
+    <tr>
+      <td class="cb"><input type="checkbox" class="row-cb"/></td>
+      <td class="sno">${start+i+1}</td>
+      <td><strong>${v.vendor_name}</strong></td>
+      <td style="color:var(--text2);font-size:12px">${v.vendor_code}</td>
+      <td style="font-family:monospace;font-size:12px">${v.pan||'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${v.gstin||'<span style="color:var(--text3)">—</span>'}</td>
+      <td><span class="badge ${v.msme_type==='Micro'?'badge-micro':v.msme_type==='Small'?'badge-small':v.msme_type==='Medium'?'badge-medium':'badge-pending'}">${v.msme_type}</span></td>
+      <td style="font-size:11px;font-family:monospace">${v.udyam_no||'—'}</td>
+      <td style="font-size:12px">${v.state||'—'}</td>
+      <td style="font-size:12px">${v.contact||'—'}</td>
+      <td style="font-size:12px">${v.payment_terms||'—'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('vendorEmpty').style.display = data.length ? 'none' : 'block';
+  document.getElementById('vendorPageInfo').textContent = `Showing ${page.length} of ${data.length} records`;
+  renderPager('vendor', data.length);
+}
+
+function renderWorking() {
+  const search = document.getElementById('workingSearch').value.toLowerCase();
+  const typeF = document.getElementById('workingTypeFilter').value;
+  const statusF = document.getElementById('workingStatusFilter').value;
+
+  let data = state.workingData.filter(b => {
+    const s = (b.vendor_name+b.bill_no+b.ref_no).toLowerCase();
+    const statusMatch = !statusF || (statusF==='Overdue'&&b.days_overdue>0&&b.outstanding>0)
+      || (statusF==='Partial'&&b.status==='Partial') || (statusF==='Unpaid'&&b.status==='Unpaid')
+      || (statusF==='Paid'&&(b.status==='Paid'||b.status==='Late-Paid'));
+    return (!search || s.includes(search)) && (!typeF || b.msme_type===typeF) && statusMatch;
+  });
+  state.workingFilter = data;
+
+  const start = (state.workingPage-1)*state.pageSize;
+  const page = data.slice(start, start+state.pageSize);
+  const tbody = document.getElementById('workingBody');
+
+  tbody.innerHTML = page.map((b,i) => {
+    const rowBg = b.days_overdue>0&&b.outstanding>0 ? 'style="background:#fff5f5"'
+      : b.outstanding>0&&b.total_paid>0 ? 'style="background:#fffdf0"'
+      : b.outstanding===0 ? 'style="background:#f6fef6"' : '';
+
+    const statusBadge = b.status==='Overdue'||b.days_overdue>0&&b.outstanding>0 ? 'badge-overdue'
+      : b.status==='Paid'||b.status==='Late-Paid' ? 'badge-paid'
+      : b.status==='Partial' ? 'badge-partial' : 'badge-pending';
+
+    const payDisplay = b.payments.length === 0
+      ? '<span style="color:var(--text3);font-size:12px">—</span>'
+      : b.payments.map(p => {
+          const isLate = p.date && b.due_date && p.date > b.due_date;
+          return `<div style="font-size:11px;line-height:1.7;white-space:nowrap">
+            <span style="font-family:monospace;${isLate?'color:var(--danger);font-weight:600':'color:var(--success)'}">${p.date||'—'}</span>
+            <span style="color:var(--text2);margin-left:4px">₹${fmt(p.amount)}</span>
+            ${isLate?'<span style="color:var(--danger);font-size:10px;margin-left:2px">⚠ late</span>':''}
+          </div>`;
+        }).join('');
+
+    // Delay = MSME Due Date - Payment Date (positive = paid late, negative = paid early)
+    const delayDisplay = b.payments.length === 0
+      ? '<span style="color:var(--text3);font-size:12px">—</span>'
+      : b.payments.map(p => {
+          if (!p.date || !b.due_date) return '<div style="font-size:11px;line-height:1.7">—</div>';
+          const diff = Math.round((new Date(b.due_date) - new Date(p.date)) / 86400000);
+          const isLate = diff < 0;   // paid after due date → negative diff
+          const absDiff = Math.abs(diff);
+          const label = diff === 0 ? 'On due date'
+                      : isLate  ? `${absDiff} days late`
+                      :           `${absDiff} days early`;
+          const color = isLate ? 'var(--danger)' : 'var(--success)';
+          return `<div style="font-size:11px;line-height:1.7;white-space:nowrap;font-weight:${isLate?'600':'400'};color:${color}">${label}</div>`;
+        }).join('');
+
+    return `<tr ${rowBg}>
+      <td class="cb"><input type="checkbox" class="row-cb"/></td>
+      <td class="sno">${start+i+1}</td>
+      <td style="min-width:160px"><strong style="font-size:13px">${b.vendor_name}</strong></td>
+      <td><span class="badge ${b.msme_type==='Micro'?'badge-micro':'badge-small'}">${b.msme_type}</span></td>
+      <td style="font-family:monospace;font-size:12px;color:var(--primary);min-width:140px">${b.bill_no}</td>
+      <td style="font-size:12px;color:var(--text2)">${b.ref_no}</td>
+      <td style="font-size:12px">${b.bill_date}</td>
+      <td style="font-size:12px;color:var(--danger);font-weight:600">${b.due_date}</td>
+      <td class="amt">₹${fmt(b.bill_amount)}</td>
+      <td style="min-width:170px">${payDisplay}</td>
+      <td style="min-width:110px;text-align:center">${delayDisplay}</td>
+      <td class="amt cr">₹${fmt(b.total_paid)}</td>
+      <td class="amt ${b.outstanding>0?'dr':''}">₹${fmt(b.outstanding)}</td>
+      <td><span class="badge ${statusBadge}">${b.status==='Late-Paid'?'Late Paid':b.status}</span></td>
+      <td style="text-align:center">
+        ${b.odoo_id ? `<a href="${(loadSettings().url||'').replace(/\/$/,'')+'/web#id='+b.odoo_id+'&model=account.move&view_type=form'}" target="_blank" style="color:var(--primary);font-size:11px;text-decoration:none;border:1px solid var(--primary);border-radius:4px;padding:2px 8px;white-space:nowrap">🔗 View</a>` : '—'}
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('workingEmpty').style.display = data.length ? 'none' : 'block';
+  document.getElementById('workingPageInfo').textContent = `Showing ${page.length} of ${data.length} records`;
+  renderPager('working', data.length);
+  updateStats();
+}
+
+// ══════════════════════════════════════════════
+//  PAYMENT DETAIL MODAL
+// ══════════════════════════════════════════════
+function showPayDetail(billId) {
+  const bill = state.workingData.find(b=>b.id===billId);
+  if(!bill) return;
+  document.getElementById('payDetailTitle').textContent = `Payment Breakdown — ${bill.bill_no}`;
+
+  const dueDate = new Date(bill.due_date);
+  let html = `
+    <div class="alert alert-info" style="margin-bottom:16px">
+      <div>Bill: <strong>${bill.bill_no}</strong> | Vendor: <strong>${bill.vendor_name}</strong> | Bill Amount: <strong>₹${fmt(bill.bill_amount)}</strong> | Due Date (45d): <strong>${bill.due_date}</strong></div>
+    </div>
+    <table class="data-table">
+      <thead><tr>
+        <th>#</th><th>Payment Ref</th><th>Payment Date</th><th style="text-align:right">Amount (₹)</th><th>Days from Due</th><th>Status (43B-h)</th>
+      </tr></thead>
+      <tbody>
+  `;
+
+  if(bill.payments.length === 0) {
+    html += `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">No payments recorded — Fully outstanding</td></tr>`;
+  } else {
+    bill.payments.forEach((p,i) => {
+      const pd = new Date(p.date);
+      const diff = Math.floor((pd - dueDate) / 86400000);
+      const late = diff > 0;
+      html += `<tr>
+        <td>${i+1}</td>
+        <td style="font-family:monospace;font-size:12px;color:var(--primary)">${p.ref}</td>
+        <td style="font-size:12px">${p.date}</td>
+        <td style="text-align:right;font-family:monospace">₹${fmt(p.amount)}</td>
+        <td style="text-align:center;font-size:12px;${late?'color:var(--danger);font-weight:600':'color:var(--success)'}">
+          ${late?'+'+diff+' late':'−'+Math.abs(diff)+' early'}
+        </td>
+        <td><span class="badge ${late?'badge-overdue':'badge-paid'}">${late?'Disallowable u/s 43B(h)':'Allowed'}</span></td>
+      </tr>`;
+    });
+  }
+
+  html += `</tbody></table>
+    <div style="margin-top:16px;padding:12px;background:var(--bg);border-radius:var(--radius);display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div><div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase">Total Paid</div>
+        <div style="font-size:18px;font-weight:600;color:var(--success)">₹${fmt(bill.total_paid)}</div></div>
+      <div><div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase">Outstanding</div>
+        <div style="font-size:18px;font-weight:600;color:var(--danger)">₹${fmt(bill.outstanding)}</div></div>
+      <div><div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase">Disallowable</div>
+        <div style="font-size:18px;font-weight:600;color:var(--danger)">₹${fmt(bill.disallowable)}</div></div>
+    </div>
+    <div class="alert alert-warning" style="margin-top:12px">
+      <strong>Note:</strong> Disallowable amount = Outstanding amount + Payments made after the 45-day due date. Multiple partial payments are tracked individually against this bill.
+    </div>`;
+
+  document.getElementById('payDetailBody').innerHTML = html;
+  document.getElementById('paymentDetailOverlay').classList.add('open');
+}
+
+// ══════════════════════════════════════════════
+//  PAGER
+// ══════════════════════════════════════════════
+function renderPager(type, total) {
+  const totalPages = Math.ceil(total / state.pageSize);
+  const current = state[type+'Page'];
+  const pager = document.getElementById(type+'Pager');
+  let html = '';
+  if(totalPages <= 1) { pager.innerHTML = ''; return; }
+  html += `<button class="page-btn" onclick="goPage('${type}',${current-1})" ${current===1?'disabled':''}>‹</button>`;
+  for(let p=1;p<=totalPages;p++) {
+    if(p===1||p===totalPages||Math.abs(p-current)<=1)
+      html += `<button class="page-btn ${p===current?'active':''}" onclick="goPage('${type}',${p})">${p}</button>`;
+    else if(Math.abs(p-current)===2)
+      html += `<button class="page-btn" disabled>…</button>`;
+  }
+  html += `<button class="page-btn" onclick="goPage('${type}',${current+1})" ${current===totalPages?'disabled':''}>›</button>`;
+  pager.innerHTML = html;
+}
+
+function goPage(type, page) {
+  const total = state[type==='msme'?'msmeFilter':type==='vendor'?'vendorFilter':'workingFilter'].length||
+    state[type==='msme'?'msmeData':type==='vendor'?'vendorData':'workingData'].length;
+  const maxPage = Math.ceil(total / state.pageSize);
+  if(page<1||page>maxPage) return;
+  state[type+'Page'] = page;
+  if(type==='msme') renderMSME();
+  else if(type==='vendor') renderVendor();
+  else renderWorking();
+}
+
+// ══════════════════════════════════════════════
+//  FILTERS
+// ══════════════════════════════════════════════
+function filterMSME() { state.msmePage=1; renderMSME(); }
+function filterVendor() { state.vendorPage=1; renderVendor(); }
+function filterWorking() { state.workingPage=1; renderWorking(); }
+function clearFilters(type) {
+  if(type==='msme') { document.getElementById('msmeSearch').value=''; document.getElementById('msmeTypeFilter').value=''; document.getElementById('msmeStatusFilter').value=''; filterMSME(); }
+  else if(type==='vendor') { document.getElementById('vendorSearch').value=''; document.getElementById('vendorTypeFilter').value=''; document.getElementById('vendorStateFilter').value=''; filterVendor(); }
+  else if(type==='working') { document.getElementById('workingSearch').value=''; document.getElementById('workingTypeFilter').value=''; document.getElementById('workingStatusFilter').value=''; filterWorking(); }
+}
+
+// ══════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════
+function switchTab(id) {
+  const tabs = ['msme-db','vendor-master','msme-working','payments','msme-return','msme1-draft'];
+  tabs.forEach(t => {
+    document.getElementById('tab-'+t) && document.getElementById('tab-'+t).classList.remove('active');
+    document.getElementById('nav-'+t) && document.getElementById('nav-'+t).classList.remove('active');
+    const tb = document.getElementById('topbar-'+t);
+    if(tb) tb.style.display = 'none';
+  });
+  document.getElementById('tab-'+id) && document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('nav-'+id) && document.getElementById('nav-'+id).classList.add('active');
+  if(id==='msme-return') generateMSMEReturn();
+  if(id==='payments') renderPayments();
+  const activeTb = document.getElementById('topbar-'+id);
+  if(activeTb) activeTb.style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════
+//  PERIOD
+// ══════════════════════════════════════════════
+function selectPeriod(p) {
+  state.currentPeriod = p;
+  document.getElementById('periodBtn1').classList.toggle('active', p==='H1');
+  document.getElementById('periodBtn2').classList.toggle('active', p==='H2');
+  const fy = document.getElementById('fySelect').value;
+  document.getElementById('activePeriodBadge').textContent = `FY ${fy} | ${p}`;
+  recalcWorking();
+}
+function recalcWorking() {
+  const fy = document.getElementById('fySelect').value;
+  document.getElementById('activePeriodBadge').textContent = `FY ${fy} | ${state.currentPeriod}`;
+  renderWorking();
+}
+
+// ══════════════════════════════════════════════
+//  EDIT MSME
+// ══════════════════════════════════════════════
+let editingId = null;
+function openEditMSME(id) {
+  const v = state.msmeData.find(m=>m.id===id);
+  if(!v) return;
+  editingId = id;
+  document.getElementById('editVendorName').value = v.vendor_name;
+  document.getElementById('editMsmeStatus').value = v.msme_status;
+  document.getElementById('editMsmeType').value = v.msme_type;
+  document.getElementById('editUdyamNo').value = v.udyam_no;
+  document.getElementById('editRegDate').value = v.reg_date;
+  document.getElementById('editExpiry').value = v.expiry;
+  document.getElementById('editMSMETitle').textContent = 'Edit MSME — '+v.vendor_name;
+  document.getElementById('editMSMEOverlay').classList.add('open');
+}
+function openAddMSME() { editingId=null; document.getElementById('editVendorName').value=''; document.getElementById('editMsmeStatus').value='Registered'; document.getElementById('editMsmeType').value='Micro'; document.getElementById('editUdyamNo').value=''; document.getElementById('editRegDate').value=''; document.getElementById('editExpiry').value=''; document.getElementById('editMSMETitle').textContent='Add MSME Vendor'; document.getElementById('editMSMEOverlay').classList.add('open'); }
+function saveMSMEEdit() {
+  if(editingId) {
+    const v = state.msmeData.find(m=>m.id===editingId);
+    v.msme_status = document.getElementById('editMsmeStatus').value;
+    v.msme_type = document.getElementById('editMsmeType').value;
+    v.udyam_no = document.getElementById('editUdyamNo').value;
+    v.reg_date = document.getElementById('editRegDate').value;
+    v.expiry = document.getElementById('editExpiry').value;
+  }
+  closeModal('editMSMEOverlay');
+  renderMSME(); updateStats();
+  saveStateToStorage();
+  showToast('MSME record updated successfully', 'success');
+}
+
+// ══════════════════════════════════════════════
+//  ODOO SETTINGS
+// ══════════════════════════════════════════════
+function openSettings() {
+  const s = loadSettings();
+  document.getElementById('odooUrl').value = s.url||'';
+  document.getElementById('odooDB').value = s.db||'';
+  document.getElementById('odooUsername').value = s.username||'';
+  document.getElementById('odooApiKey').value = s.apiKey||'';
+  document.getElementById('odooMsmeTag').value = s.msmeTag||'MSME';
+  document.getElementById('agreementDays').value = s.agreementDays||45;
+  document.getElementById('settingUserName').value = s.userName||'';
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+async function saveSettings() {
+  const s = {
+    url:          document.getElementById('odooUrl').value,
+    db:           document.getElementById('odooDB').value,
+    username:     document.getElementById('odooUsername').value,
+    apiKey:       document.getElementById('odooApiKey').value,
+    msmeTag:      document.getElementById('odooMsmeTag').value,
+    agreementDays: parseInt(document.getElementById('agreementDays').value),
+    userName:     document.getElementById('settingUserName').value
+  };
+  try { localStorage.setItem('msmePortalSettings', JSON.stringify(s)); } catch(e) {}
+  Object.assign(state.odoo, s);
+  const n = s.userName||'Admin';
+  document.getElementById('userName').textContent = n;
+  document.getElementById('userInitials').textContent = n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+  // Also save to proxy server (for server-side Odoo calls)
+  try {
+    await fetch(`${PROXY}/api/settings`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(s)
+    });
+  } catch(e) { /* proxy may be offline */ }
+
+  closeModal('settingsOverlay');
+  showToast('Settings saved', 'success');
+}
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem('msmePortalSettings')||'{}'); } catch(e) { return {}; }
+}
+
+// ══════════════════════════════════════════════
+//  PERSIST STATE TO LOCALSTORAGE
+// ══════════════════════════════════════════════
+function saveStateToStorage() {
+  try {
+    localStorage.setItem('msmePortalState', JSON.stringify({
+      msmeData:    state.msmeData,
+      vendorData:  state.vendorData,
+      workingData: state.workingData,
+      savedAt:     new Date().toISOString()
+    }));
+  } catch(e) {
+    console.warn('Could not save state:', e);
+  }
+}
+
+function loadStateFromStorage() {
+  try {
+    const raw = localStorage.getItem('msmePortalState');
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (saved.msmeData)   state.msmeData   = saved.msmeData;
+    if (saved.vendorData) state.vendorData = saved.vendorData;
+    if (saved.workingData) {
+      // Re-hydrate Date objects inside payments if needed
+      state.workingData = saved.workingData;
+    }
+    return true;
+  } catch(e) {
+    console.warn('Could not restore state:', e);
+    return false;
+  }
+}
+
+function clearSavedState() {
+  localStorage.removeItem('msmePortalState');
+  showToast('Saved data cleared. Reload to start fresh.', 'info');
+}
+
+async function testConnection() {
+  const div = document.getElementById('connectionTestResult');
+  div.innerHTML = '<div class="alert alert-info" style="margin-top:12px">🔄 Testing connection via proxy server...</div>';
+
+  const proxyOk = await checkProxy();
+  if (!proxyOk) {
+    div.innerHTML = `<div class="alert alert-error" style="margin-top:12px">
+      ❌ <strong>Proxy server is offline.</strong><br>
+      Open a terminal in the proxy folder and run: <code style="background:#1b1a19;color:#fff;padding:2px 6px;border-radius:2px">node server.js</code>
+    </div>`;
+    return;
+  }
+
+  const body = {
+    url:      document.getElementById('odooUrl').value,
+    db:       document.getElementById('odooDB').value,
+    username: document.getElementById('odooUsername').value,
+    apiKey:   document.getElementById('odooApiKey').value,
+  };
+
+  try {
+    const res = await fetch(`${PROXY}/api/test`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      div.innerHTML = `<div class="alert alert-success" style="margin-top:12px">✅ <strong>Connected!</strong> Logged in as: ${data.user}</div>`;
+      document.getElementById('odooStatusDot').classList.add('connected');
+      document.getElementById('odooStatusText').textContent = 'Connected';
+    } else {
+      div.innerHTML = `<div class="alert alert-error" style="margin-top:12px">❌ ${data.error}</div>`;
+    }
+  } catch (e) {
+    div.innerHTML = `<div class="alert alert-error" style="margin-top:12px">❌ ${e.message}</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  ODOO SYNC (via local proxy server)
+// ══════════════════════════════════════════════
+// ── PAN / GSTIN helpers ────────────────────────────────────────
+// GSTIN format: 2-digit state + 10-char PAN + 1 entity + Z + checksum
+// e.g. 19ABQFA8686H1ZL → PAN = ABQFA8686H
+function extractPANfromGSTIN(gstin) {
+  if (!gstin) return '';
+  const g = gstin.trim().toUpperCase();
+  // Standard GSTIN is 15 chars: SS-PPPPPPPPPP-E-Z-C
+  if (/^\d{2}[A-Z]{5}\d{4}[A-Z]{1}\d{1}Z[A-Z0-9]{1}$/.test(g)) {
+    return g.substring(2, 12); // characters 3–12 = PAN
+  }
+  // If already a 10-char PAN
+  if (/^[A-Z]{5}\d{4}[A-Z]{1}$/.test(g)) return g;
+  return '';
+}
+
+// Clean & normalise a partner's PAN + GSTIN fields
+// Odoo stores GSTIN in the `vat` field (prefixed with "IN" or raw)
+// Our server strips "IN" prefix but vat could be GSTIN or PAN
+function normalisePartnerTaxFields(record) {
+  let gstin = (record.gstin || '').trim().toUpperCase();
+  let pan   = (record.pan   || '').trim().toUpperCase();
+  // Remove any "IN" prefix that Odoo may prepend
+  if (gstin.startsWith('IN')) gstin = gstin.substring(2);
+  if (pan.startsWith('IN'))   pan   = pan.substring(2);
+
+  // If `pan` field looks like a GSTIN (15 chars), it IS actually GSTIN stored in vat
+  if (/^\d{2}[A-Z]{5}\d{4}[A-Z]\d[A-Z][A-Z0-9]$/.test(pan)) {
+    // pan field is actually a GSTIN
+    if (!gstin) gstin = pan;
+    pan = extractPANfromGSTIN(pan);
+  }
+  // If we have GSTIN but no PAN, extract PAN from GSTIN
+  if (!pan && gstin) pan = extractPANfromGSTIN(gstin);
+
+  return { ...record, pan, gstin };
+}
+
+async function syncOdoo() {
+  const bar = document.getElementById('loadingBar');
+  bar.classList.add('active');
+
+  const proxyOk = await checkProxy();
+  if (!proxyOk) {
+    bar.classList.remove('active');
+    showToast('❌ Proxy server offline — run: node server.js in your terminal', 'error');
+    return;
+  }
+
+  showToast('🔄 Syncing from Odoo via local proxy...', 'info');
+
+  try {
+    // Sync MSME Vendors
+    showToast('Fetching MSME vendors...', 'info');
+    const msmeRes = await callProxy('/api/sync/msme-vendors');
+    if (msmeRes.ok && msmeRes.data?.length) {
+      state.msmeData = msmeRes.data.map(normalisePartnerTaxFields);
+      showToast(`✅ ${msmeRes.count} MSME vendors loaded`, 'success');
+    } else if (!msmeRes.ok) {
+      showToast(`⚠ MSME vendors: ${msmeRes.error}`, 'error');
+    }
+
+    // Sync Vendor Master
+    const vendorRes = await callProxy('/api/sync/vendor-master');
+    if (vendorRes.ok && vendorRes.data?.length) {
+      state.vendorData = vendorRes.data.map(normalisePartnerTaxFields);
+      showToast(`✅ ${vendorRes.count} vendors in master`, 'success');
+    }
+
+    // Sync Bills
+    const fy     = document.getElementById('fySelect')?.value || '2024-25';
+    const period = state.currentPeriod || 'H1';
+    showToast(`Fetching bills for FY ${fy} | ${period}...`, 'info');
+    const billsRes = await callProxy('/api/sync/bills', { period, fy });
+    if (billsRes.ok && billsRes.data?.length) {
+      state.workingData = billsRes.data;
+      showToast(`✅ ${billsRes.count} bills fetched with payment reconciliation`, 'success');
+    } else if (billsRes.ok) {
+      showToast(`ℹ ${billsRes.message || 'No bills found for this period'}`, 'info');
+    } else {
+      showToast(`⚠ Bills: ${billsRes.error}`, 'error');
+    }
+
+    updateStats();
+    renderMSME();
+    renderVendor();
+    renderWorking();
+    renderPayments();
+    saveStateToStorage();
+    const nowStr = new Date().toLocaleString('en-IN');
+    const infoEl = document.getElementById('lastSavedInfo');
+    if (infoEl) infoEl.textContent = 'Last synced: ' + nowStr;
+    showToast('✅ Sync complete! Data saved locally.', 'success');
+
+  } catch (e) {
+    showToast(`❌ Sync failed: ${e.message}. Is proxy server running?`, 'error');
+  }
+
+  bar.classList.remove('active');
+}
+
+// ══════════════════════════════════════════════
+//  EXPORT CSV
+// ══════════════════════════════════════════════
+function exportCSV() {
+  const activeTab = document.querySelector('.page.active').id;
+  let headers, rows;
+
+  if(activeTab==='tab-msme-db') {
+    headers = ['S No','Vendor Name','Vendor Code','PAN','MSME Status','MSME Type','Udyam No','Registration Date'];
+    rows = state.msmeData.map((v,i)=>[i+1,v.vendor_name,v.vendor_code,v.pan,v.msme_status,v.msme_type,v.udyam_no,v.reg_date]);
+  } else if(activeTab==='tab-vendor-master') {
+    headers = ['S No','Vendor Name','Vendor Code','PAN','GSTIN','MSME Type','Udyam No','State'];
+    rows = state.vendorData.map((v,i)=>[i+1,v.vendor_name,v.vendor_code,v.pan,v.gstin,v.msme_type,v.udyam_no,v.state]);
+  } else {
+    headers = ['S No','Vendor Name','MSME Type','Bill No','Ref No','Bill Date','Due Date (MSME)','Bill Amount','Total Paid','Outstanding','Status'];
+    rows = state.workingData.map((b,i)=>[i+1,b.vendor_name,b.msme_type,b.bill_no,b.ref_no,b.bill_date,b.due_date,b.bill_amount,b.total_paid,b.outstanding,b.status]);
+  }
+
+  const csv = [headers.join(','), ...rows.map(r=>r.map(c=>`"${c}"`).join(','))].join('\n');
+  download('MSME_Export_'+new Date().toISOString().split('T')[0]+'.csv', csv, 'text/csv');
+  showToast('CSV exported', 'success');
+}
+
+function exportMSME1() { generateMSME1(); switchTab('msme1-draft'); }
+
+function shouldShowInMSME1(b, periodEndStr) {
+  // Rules for inclusion in MSME-1:
+  // ✅ YES: Paid AFTER due date (payment date > due date)
+  // ✅ YES: Still unpaid on period end AND due date already crossed (due date ≤ period end)
+  // ❌ NO:  Paid within due date (all payments ≤ due date, nothing outstanding)
+  // ❌ NO:  Unpaid but 45 days not crossed by period end (due date > period end)
+  const dueDate   = new Date(b.due_date);
+  const periodEnd = new Date(periodEndStr);
+
+  const hasPaidLate = b.payments && b.payments.some(p => p.date && new Date(p.date) > dueDate);
+  const isUnpaidAndOverdue = b.outstanding > 0.01 && dueDate <= periodEnd;
+
+  return hasPaidLate || isUnpaidAndOverdue;
+}
+
+function generateMSME1() {
+  const periodEnd = state.currentPeriod === 'H1'
+    ? `${state.currentFY.split('-')[0]}-09-30`
+    : `${parseInt(state.currentFY.split('-')[0]) + 1}-03-31`;
+
+  const eligible = (state.workingData || []).filter(b =>
+    b.show_in_msme1 !== undefined
+      ? b.show_in_msme1                    // use server-computed flag
+      : shouldShowInMSME1(b, periodEnd)    // fallback: compute client-side
+  );
+  const tbody = document.getElementById('msme1Body');
+  if(eligible.length===0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--success)">✅ No dues beyond 45 days — MSME-1 shows NIL</td></tr>';
+    return;
+  }
+
+  // Group by vendor
+  const grouped = {};
+  eligible.forEach(b => {
+    const dueDate = new Date(b.due_date);
+    // Amount reportable = outstanding + payments made after due date
+    const latePaid = (b.payments || [])
+      .filter(p => p.date && new Date(p.date) > dueDate)
+      .reduce((s, p) => s + p.amount, 0);
+    const reportable = Math.min(b.bill_amount, (b.outstanding || 0) + latePaid);
+
+    if(!grouped[b.vendor_name]) {
+      grouped[b.vendor_name] = { ...b, total_reportable: 0, earliest_due: b.due_date };
+    }
+    grouped[b.vendor_name].total_reportable += reportable;
+    if(b.due_date < grouped[b.vendor_name].earliest_due) {
+      grouped[b.vendor_name].earliest_due = b.due_date;
+    }
+  });
+
+  const msmeDb = state.msmeData;
+  tbody.innerHTML = Object.values(grouped).map((v,i) => {
+    const msme = msmeDb.find(m=>m.vendor_name===v.vendor_name)||{};
+    return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${v.vendor_name}</strong></td>
+      <td style="font-family:monospace;font-size:12px">${msme.pan||'—'}</td>
+      <td style="font-family:monospace;font-size:11px">${msme.udyam_no||'—'}</td>
+      <td><span class="badge ${v.msme_type==='Micro'?'badge-micro':'badge-small'}">${v.msme_type}</span></td>
+      <td style="text-align:right;font-weight:600;color:var(--danger)">₹${fmt(v.total_reportable)}</td>
+      <td style="font-size:12px">${v.earliest_due}</td>
+      <td><input type="text" class="form-input" style="font-size:12px" placeholder="Reason for delay"/></td>
+    </tr>`;
+  }).join('');
+  showToast('MSME-1 draft generated', 'success');
+}
+
+
+
+// ══════════════════════════════════════════════
+//  MSME RETURN TAB
+// ══════════════════════════════════════════════
+let returnData = [];  // processed vendor-wise summary
+
+function generateMSMEReturn() {
+  const msmeDb  = state.msmeData;
+  const working = state.workingData;
+  if (!working || working.length === 0) {
+    showToast('No working data — sync from Odoo first', 'error'); return;
+  }
+
+  // Group bills by vendor
+  const vendors = {};
+  working.forEach(b => {
+    const key = b.vendor_name;
+    if (!vendors[key]) {
+      const ms = msmeDb.find(m => m.vendor_name === key) || {};
+      vendors[key] = {
+        vendor_name: key,
+        pan: ms.pan || '—',
+        udyam_no: ms.udyam_no || '',
+        msme_type: b.msme_type,
+        // (d)(ii) paid within 45 days — other mode
+        d2_invoices: 0, d2_amount: 0,
+        // (e) paid after 45 days
+        e_invoices: 0,  e_amount: 0,
+        // (f) outstanding <= 45 days (due date not yet crossed)
+        f_invoices: 0,  f_amount: 0,
+        // (g) outstanding > 45 days
+        g_invoices: 0,  g_amount: 0,
+      };
+    }
+    const v = vendors[key];
+    const dueDate = new Date(b.due_date);
+    const today   = new Date();
+
+    // Payments made within 45 days (payment date <= due date)
+    let paidWithin45 = 0, invoiceCountedWithin = false;
+    let paidAfter45  = 0, invoiceCountedAfter  = false;
+
+    b.payments.forEach(p => {
+      if (!p.date) return;
+      const pd = new Date(p.date);
+      if (pd <= dueDate) {
+        paidWithin45 += p.amount;
+      } else {
+        paidAfter45  += p.amount;
+      }
+    });
+
+    if (paidWithin45 > 0) { v.d2_amount += paidWithin45; v.d2_invoices += 1; }
+    if (paidAfter45  > 0) { v.e_amount  += paidAfter45;  v.e_invoices  += 1; }
+
+    // Outstanding
+    if (b.outstanding > 0.01) {
+      const daysOverdue = Math.floor((today - dueDate) / 86400000);
+      if (daysOverdue <= 0) {
+        v.f_invoices += 1; v.f_amount += b.outstanding;
+      } else {
+        v.g_invoices += 1; v.g_amount += b.outstanding;
+      }
+    }
+  });
+
+  returnData = Object.values(vendors).sort((a,b) => a.vendor_name.localeCompare(b.vendor_name));
+  renderMSMEReturn();
+  showToast('MSME Return populated — ' + returnData.length + ' vendors', 'success');
+}
+
+let returnFiltered = [];
+
+function filterMSMEReturn() {
+  const q = (document.getElementById('returnSearch')?.value || '').toLowerCase();
+  returnFiltered = q
+    ? returnData.filter(v => (v.vendor_name+v.pan).toLowerCase().includes(q))
+    : [...returnData];
+  renderMSMEReturnPage(1);
+}
+
+function renderMSMEReturn() {
+  filterMSMEReturn();
+}
+
+function renderMSMEReturnPage(page) {
+  const ps = parseInt(document.getElementById('returnPageSel')?.value || 25);
+  const data = returnFiltered.length ? returnFiltered : [...returnData];
+  const total = data.length;
+  const start = (page - 1) * ps;
+  const slice = ps >= 500 ? data : data.slice(start, start + ps);
+
+  document.getElementById('returnCount').textContent = total + ' vendor' + (total !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('returnBody');
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:30px">No data — click Refresh from Working</td></tr>';
+    document.getElementById('returnFoot').style.display = 'none';
+    document.getElementById('returnPageInfo').textContent = '0 vendors';
+    document.getElementById('returnPager').innerHTML = '';
+    return;
+  }
+
+  // Totals across ALL filtered records (not just page slice)
+  const tot = { d2_no:0, d2_amt:0, e_no:0, e_amt:0, f_no:0, f_amt:0, g_no:0, g_amt:0 };
+  data.forEach(v => {
+    tot.d2_no += v.d2_invoices; tot.d2_amt += v.d2_amount;
+    tot.e_no  += v.e_invoices;  tot.e_amt  += v.e_amount;
+    tot.f_no  += v.f_invoices;  tot.f_amt  += v.f_amount;
+    tot.g_no  += v.g_invoices;  tot.g_amt  += v.g_amount;
+  });
+
+  tbody.innerHTML = slice.map((v, i) => {
+    const rowBg = v.g_invoices > 0 ? '#fff5f5' : v.e_invoices > 0 ? '#fffdf0' : '#fff';
+    return `<tr style="background:${rowBg}">
+      <td style="text-align:center;color:var(--text3);font-size:11px;width:44px">${start+i+1}</td>
+      <td style="min-width:180px"><strong style="font-size:12px">${v.vendor_name}</strong><br/><span style="font-size:10px;color:var(--text3)">${v.msme_type}</span></td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${v.pan}</td>
+      <td style="text-align:right;color:#8abacc;font-style:italic;font-size:11px">—</td>
+      <td style="text-align:right;color:#8abacc;font-style:italic;font-size:11px">—</td>
+      <td style="text-align:right;font-weight:700;color:#0078d4">${v.d2_invoices > 0 ? v.d2_invoices : '<span style=\"color:#bbb\">—</span>'}</td>
+      <td style="text-align:right;font-weight:700;color:#0078d4">${v.d2_amount > 0 ? '₹'+fmt(v.d2_amount) : '<span style=\"color:#bbb\">—</span>'}</td>
+      <td style="text-align:right;font-weight:700;color:${v.e_invoices>0?'#c00':'#bbb'}">${v.e_invoices > 0 ? v.e_invoices : '—'}</td>
+      <td style="text-align:right;font-weight:700;color:${v.e_amount>0?'#c00':'#bbb'}">${v.e_amount > 0 ? '₹'+fmt(v.e_amount) : '—'}</td>
+      <td style="text-align:right;color:${v.f_invoices>0?'#b86800':'#bbb'}">${v.f_invoices > 0 ? v.f_invoices : '—'}</td>
+      <td style="text-align:right;color:${v.f_amount>0?'#b86800':'#bbb'}">${v.f_amount > 0 ? '₹'+fmt(v.f_amount) : '—'}</td>
+      <td style="text-align:right;font-weight:700;color:${v.g_invoices>0?'#c00':'#bbb'}">${v.g_invoices > 0 ? v.g_invoices : '—'}</td>
+      <td style="text-align:right;font-weight:700;color:${v.g_amount>0?'#c00':'#bbb'}">${v.g_amount > 0 ? '₹'+fmt(v.g_amount) : '—'}</td>
+      <td><input type="text" class="form-input" style="width:130px;height:26px;font-size:11px;border:1px solid #ddd" placeholder="Enter reason…"/></td>
+    </tr>`;
+  }).join('');
+
+  // Footer totals
+  document.getElementById('returnFoot').style.display = '';
+  document.getElementById('ft-d2-no').textContent  = tot.d2_no  || '—';
+  document.getElementById('ft-d2-amt').textContent = tot.d2_amt > 0 ? '₹'+fmt(tot.d2_amt) : '—';
+  document.getElementById('ft-e-no').textContent   = tot.e_no   || '—';
+  document.getElementById('ft-e-amt').textContent  = tot.e_amt  > 0 ? '₹'+fmt(tot.e_amt)  : '—';
+  document.getElementById('ft-f-no').textContent   = tot.f_no   || '—';
+  document.getElementById('ft-f-amt').textContent  = tot.f_amt  > 0 ? '₹'+fmt(tot.f_amt)  : '—';
+  document.getElementById('ft-g-no').textContent   = tot.g_no   || '—';
+  document.getElementById('ft-g-amt').textContent  = tot.g_amt  > 0 ? '₹'+fmt(tot.g_amt)  : '—';
+
+  // Pagination
+  const totalPages = ps >= 500 ? 1 : Math.ceil(total / ps);
+  document.getElementById('returnPageInfo').textContent = `Showing ${start+1}–${Math.min(start+ps,total)} of ${total} vendors`;
+  const pager = document.getElementById('returnPager');
+  if (totalPages <= 1) { pager.innerHTML = ''; return; }
+  let ph = `<button class="page-btn" onclick="renderMSMEReturnPage(${page-1})" ${page===1?'disabled':''}>‹</button>`;
+  for (let p=1; p<=totalPages; p++) {
+    if (p===1||p===totalPages||Math.abs(p-page)<=1)
+      ph += `<button class="page-btn ${p===page?'active':''}" onclick="renderMSMEReturnPage(${p})">${p}</button>`;
+    else if (Math.abs(p-page)===2) ph += `<button class="page-btn" disabled>…</button>`;
+  }
+  ph += `<button class="page-btn" onclick="renderMSMEReturnPage(${page+1})" ${page===totalPages?'disabled':''}>›</button>`;
+  pager.innerHTML = ph;
+}
+
+function exportMSMEReturnCSV() {
+  if (!returnData.length) { showToast('No data to export', 'error'); return; }
+  const headers = ['S.No.','Vendor Name','PAN','(d)(i) TReDS No','(d)(i) TReDS Amt','(d)(ii) Other No','(d)(ii) Other Amt','(e) After45 No','(e) After45 Amt','(f) Outstd<=45 No','(f) Outstd<=45 Amt','(g) Outstd>45 No','(g) Outstd>45 Amt','(h) Reason'];
+  const rows = returnData.map((v,i) => [
+    i+1, v.vendor_name, v.pan,
+    '','',
+    v.d2_invoices, v.d2_amount,
+    v.e_invoices,  v.e_amount,
+    v.f_invoices,  v.f_amount,
+    v.g_invoices,  v.g_amount,
+    ''
+  ]);
+  const csv = [headers.join(','), ...rows.map(r=>r.map(c=>`"${c}"`).join(','))].join('\n');
+  download('MSME_Return_'+new Date().toISOString().split('T')[0]+'.csv', csv, 'text/csv');
+  showToast('MSME Return CSV exported', 'success');
+}
+
+
+// ══════════════════════════════════════════════
+//  PAYMENTS TAB
+// ══════════════════════════════════════════════
+const payState = { page: 1, pageSize: 15, filtered: [] };
+
+function buildPaymentRows() {
+  const rows = [];
+  state.workingData.forEach(bill => {
+    if (bill.payments && bill.payments.length > 0) {
+      bill.payments.forEach(p => {
+        rows.push({
+          vendor_name: bill.vendor_name,
+          bill_no: bill.bill_no,
+          payment_date: p.date || '—',
+          payment_amount: p.amount || 0
+        });
+      });
+    }
+  });
+  return rows;
+}
+
+function renderPayments() {
+  const allRows = buildPaymentRows();
+  const vendorSel = document.getElementById('paymentVendorFilter');
+  const currentVendor = vendorSel ? vendorSel.value : '';
+  const vendors = [...new Set(allRows.map(r => r.vendor_name))].sort();
+  if (vendorSel) {
+    vendorSel.innerHTML = '<option value="">All Vendors</option>' +
+      vendors.map(v => '<option value="' + v + '"' + (v===currentVendor?' selected':'') + '>' + v + '</option>').join('');
+  }
+  filterPayments(allRows);
+}
+
+function filterPayments(allRowsIn) {
+  const allRows = allRowsIn || buildPaymentRows();
+  const searchEl = document.getElementById('paymentSearch');
+  const vendorEl = document.getElementById('paymentVendorFilter');
+  const search = searchEl ? searchEl.value.toLowerCase() : '';
+  const vendorF = vendorEl ? vendorEl.value : '';
+
+  payState.filtered = allRows.filter(r => {
+    const s = (r.vendor_name + r.bill_no).toLowerCase();
+    return (!search || s.includes(search)) && (!vendorF || r.vendor_name === vendorF);
+  });
+
+  const totalAmt = payState.filtered.reduce((s, r) => s + r.payment_amount, 0);
+  const uniqueVendors = new Set(payState.filtered.map(r => r.vendor_name)).size;
+  const uniqueBills = new Set(payState.filtered.map(r => r.bill_no)).size;
+  document.getElementById('pay-total-rows').textContent = payState.filtered.length;
+  document.getElementById('pay-total-amt').textContent = '\u20B9' + fmt(totalAmt);
+  document.getElementById('pay-vendors').textContent = uniqueVendors;
+  document.getElementById('pay-bills').textContent = uniqueBills;
+  document.getElementById('cnt-payments').textContent = allRows.length;
+
+  renderPaymentPage(1);
+}
+
+function renderPaymentPage(page) {
+  payState.page = page;
+  const ps = payState.pageSize;
+  const data = payState.filtered;
+  const total = data.length;
+  const start = (page - 1) * ps;
+  const pageData = (ps >= 500) ? data : data.slice(start, start + ps);
+
+  const tbody = document.getElementById('paymentsBody');
+  if (!tbody) return;
+
+  let billKey = null, shade = false;
+  tbody.innerHTML = pageData.map(function(r, i) {
+    const key = r.vendor_name + '|' + r.bill_no;
+    if (key !== billKey) { billKey = key; shade = !shade; }
+    const bg = shade ? 'background:#faf9f8' : '';
+    return '<tr style="' + bg + '">' +
+      '<td class="sno">' + (start + i + 1) + '</td>' +
+      '<td><strong>' + r.vendor_name + '</strong></td>' +
+      '<td style="font-family:monospace;font-size:12px;color:var(--primary)">' + r.bill_no + '</td>' +
+      '<td style="font-family:monospace;font-size:12px">' + r.payment_date + '</td>' +
+      '<td class="amt cr" style="font-size:13px">\u20B9' + fmt(r.payment_amount) + '</td>' +
+      '</tr>';
+  }).join('');
+
+  const isEmpty = (data.length === 0);
+  const emptyEl = document.getElementById('paymentsEmpty');
+  if (emptyEl) emptyEl.style.display = isEmpty ? 'block' : 'none';
+
+  const grandTotal = data.reduce((s, r) => s + r.payment_amount, 0);
+  const foot = document.getElementById('paymentsFoot');
+  if (foot) foot.style.display = isEmpty ? 'none' : '';
+  const footTotal = document.getElementById('pay-foot-total');
+  if (footTotal) footTotal.textContent = '\u20B9' + fmt(grandTotal);
+
+  const endIdx = (ps >= 500) ? total : Math.min(start + ps, total);
+  const startIdx = total === 0 ? 0 : start + 1;
+  const pageInfoEl = document.getElementById('paymentPageInfo');
+  if (pageInfoEl) pageInfoEl.textContent = 'Showing ' + startIdx + '–' + endIdx + ' of ' + total + ' entries';
+
+  const totalPages = (ps >= 500) ? 1 : Math.ceil(total / ps);
+  const pager = document.getElementById('paymentPager');
+  if (!pager) return;
+  if (totalPages <= 1) { pager.innerHTML = ''; return; }
+  let ph = '<button class="page-btn" onclick="renderPaymentPage(' + (page-1) + ')" ' + (page===1?'disabled':'') + '>&#x2039;</button>';
+  for (let p = 1; p <= totalPages; p++) {
+    if (p===1||p===totalPages||Math.abs(p-page)<=1)
+      ph += '<button class="page-btn ' + (p===page?'active':'') + '" onclick="renderPaymentPage(' + p + ')">' + p + '</button>';
+    else if (Math.abs(p-page)===2)
+      ph += '<button class="page-btn" disabled>&hellip;</button>';
+  }
+  ph += '<button class="page-btn" onclick="renderPaymentPage(' + (page+1) + ')" ' + (page===totalPages?'disabled':'') + '>&#x203A;</button>';
+  pager.innerHTML = ph;
+}
+
+function changePaymentPageSize(val) {
+  payState.pageSize = parseInt(val);
+  renderPaymentPage(1);
+}
+
+function exportPaymentsCSV() {
+  if (!payState.filtered.length) { showToast('No payment data to export', 'error'); return; }
+  const headers = ['S.No.', 'Name of Vendor', 'Bill No', 'Payment Date', 'Payment Amount'];
+  const rows = payState.filtered.map(function(r, i) {
+    return [i+1, r.vendor_name, r.bill_no, r.payment_date, r.payment_amount];
+  });
+  const csv = [headers.join(','), ...rows.map(r => r.map(c => '"' + c + '"').join(','))].join('\n');
+  download('Payments_' + new Date().toISOString().split('T')[0] + '.csv', csv, 'text/csv');
+  showToast('Payments CSV exported', 'success');
+}
+
+
+// ══════════════════════════════════════════════
+//  FILTER TOGGLE
+// ══════════════════════════════════════════════
+
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const brand   = document.querySelector('.shell-brand');
+  sidebar.classList.toggle('collapsed');
+  brand.title = sidebar.classList.contains('collapsed') ? 'Expand sidebar' : 'Collapse sidebar';
+}
+
+function toggleFilter(type) {
+  const bars = { msme:'filterBarMsme', vendor:'filterBarVendor', working:'filterBarWorking' };
+  const btns = { msme:'filterToggleMsme', vendor:'filterToggleVendor', working:'filterToggleWorking' };
+  const bar = document.getElementById(bars[type]);
+  const btn = document.getElementById(btns[type]);
+  if (!bar) return;
+  const isHidden = bar.classList.toggle('hidden');
+  if (btn) btn.classList.toggle('active', !isHidden);
+}
+
+// ══════════════════════════════════════════════
+//  PAGE SIZE
+// ══════════════════════════════════════════════
+function changePageSize(val) {
+  state.pageSize = parseInt(val);
+  document.querySelectorAll('#perpageSel').forEach(el => el.value = val);
+  state.msmePage = 1; state.vendorPage = 1; state.workingPage = 1;
+  renderMSME(); renderVendor(); renderWorking();
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function fmt(n) { return Number(n).toLocaleString('en-IN'); }
+function download(name, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name; a.click();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function selectAll(type, cb) { document.querySelectorAll('#tab-'+
+  (type==='msme'?'msme-db':type==='vendor'?'vendor-master':'msme-working')+' .row-cb')
+  .forEach(c=>c.checked=cb.checked); }
+function sortTable() {} // extendable
+function viewVendorBills(name) { document.getElementById('workingSearch').value=name; switchTab('msme-working'); filterWorking(); }
+
+function showToast(msg, type='info') {
+  const tc = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  t.innerHTML = `<span style="font-size:14px">${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+
+// Sync horizontal scroll between return header and body
+document.addEventListener('DOMContentLoaded', function() {
+  const body = document.getElementById('returnBodyWrap');
+  const head = document.getElementById('returnHeaderWrap');
+  if (body && head) {
+    body.addEventListener('scroll', function() {
+      head.scrollLeft = body.scrollLeft;
+    });
+  }
+});
+
+window.onload = async () => {
+  const s = loadSettings();
+  if(s.userName) {
+    document.getElementById('userName').textContent = s.userName;
+    document.getElementById('userInitials').textContent = s.userName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  }
+  document.getElementById('topbar-msme-db').style.display = 'flex';
+  loadMockData();
+  // Check if proxy is running
+  const proxyOk = await checkProxy();
+  if (proxyOk) {
+    showToast('✅ Proxy server connected — click Sync from Odoo to load live data', 'success');
+  } else {
+    const infoEl2 = document.getElementById('lastSavedInfo');
+    const hasSaved = localStorage.getItem('msmePortalState');
+    if (hasSaved) {
+      try {
+        const s2 = JSON.parse(hasSaved);
+        const dt = s2.savedAt ? new Date(s2.savedAt).toLocaleString('en-IN') : '';
+        showToast('✅ Data restored from last session' + (dt ? ' · ' + dt : ''), 'success');
+        if (infoEl2 && dt) infoEl2.textContent = 'Last saved: ' + dt;
+      } catch(e) {
+        showToast('✅ Data restored from last session', 'success');
+      }
+    } else {
+      showToast('No saved data found. Sync from Odoo to load data.', 'info');
+    }
+  }
+};
+</script>
+</body>
+</html>
