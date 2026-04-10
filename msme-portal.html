@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MSME Return Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --primary: #0078d4;
@@ -830,9 +831,9 @@
       Refresh from Working
     </button>
     <div class="topbar-sep"></div>
-    <button class="topbar-btn" onclick="exportMSMEReturnCSV()">
+    <button class="topbar-btn" onclick="exportMSMEReturnExcel()">
       <svg viewBox="0 0 16 16" fill="currentColor" style="width:14px;height:14px"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
-      Export CSV
+      Export Excel (Govt Format)
     </button>
   </div>
 </div>
@@ -2090,21 +2091,96 @@ function renderMSMEReturnPage(page) {
   pager.innerHTML = ph;
 }
 
-function exportMSMEReturnCSV() {
+function exportMSMEReturnExcel() {
   if (!returnData.length) { showToast('No data to export', 'error'); return; }
-  const headers = ['S.No.','Vendor Name','PAN','(d)(i) TReDS No','(d)(i) TReDS Amt','(d)(ii) Other No','(d)(ii) Other Amt','(e) After45 No','(e) After45 Amt','(f) Outstd<=45 No','(f) Outstd<=45 Amt','(g) Outstd>45 No','(g) Outstd>45 Amt','(h) Reason'];
-  const rows = returnData.map((v,i) => [
-    i+1, v.vendor_name, v.pan,
-    '','',
-    v.d2_invoices, v.d2_amount,
-    v.e_invoices,  v.e_amount,
-    v.f_invoices,  v.f_amount,
-    v.g_invoices,  v.g_amount,
-    ''
-  ]);
-  const csv = [headers.join(','), ...rows.map(r=>r.map(c=>`"${c}"`).join(','))].join('\n');
-  download('MSME_Return_'+new Date().toISOString().split('T')[0]+'.csv', csv, 'text/csv');
-  showToast('MSME Return CSV exported', 'success');
+
+  const wb = XLSX.utils.book_new();
+  const ws = {};
+
+  // ── Row 1: Top-level headers ──────────────────────────────────────
+  ws['A1'] = { v: '(a)\nS.No.',                                    t: 's' };
+  ws['B1'] = { v: '(b)\nName of MSE Supplier',                     t: 's' };
+  ws['C1'] = { v: '(c)\nPAN of the Supplier',                      t: 's' };
+  ws['D1'] = { v: '(d)\nPaid within 45 days',                      t: 's' };
+  ws['H1'] = { v: '(e)\nPaid after 45 days',                       t: 's' };
+  ws['J1'] = { v: '(f)\nOutstanding for 45 days or less',          t: 's' };
+  ws['L1'] = { v: '(g)\nOutstanding for more than 45 days',        t: 's' };
+  ws['N1'] = { v: '\n(h)\nReason for delay in payment / amount outstanding', t: 's' };
+
+  // ── Row 2: Sub-headers under (d) ─────────────────────────────────
+  ws['D2'] = { v: 'Through TReDS \n(i)',          t: 's' };
+  ws['F2'] = { v: 'Other mode of payments\n(ii)', t: 's' };
+
+  // ── Row 3: Column labels ──────────────────────────────────────────
+  ws['D3'] = { v: 'No.\n\nThrough TReDS',                         t: 's' };
+  ws['E3'] = { v: '\nAmount\n(Rs.)\n\nThrough TReDS',             t: 's' };
+  ws['F3'] = { v: 'No.\n\nOther mode of payments',                t: 's' };
+  ws['G3'] = { v: 'Amount\n(Rs.)\n\nOther mode of payments',      t: 's' };
+  ws['H3'] = { v: 'No.\n\nPaid after 45 days',                    t: 's' };
+  ws['I3'] = { v: 'Amount\n(Rs.)\n\nPaid after 45 days',          t: 's' };
+  ws['J3'] = { v: '\nNo.\n\nOutstanding for 45 days or less',     t: 's' };
+  ws['K3'] = { v: 'Amount\n(Rs.)\n\nOutstanding for 45 days or less', t: 's' };
+  ws['L3'] = { v: 'No.\n\nOutstanding for more than 45 days',     t: 's' };
+  ws['M3'] = { v: 'Amount\n(Rs.)\n\nOutstanding for more than 45 days', t: 's' };
+
+  // ── Data rows starting at row 4 ───────────────────────────────────
+  returnData.forEach((v, i) => {
+    const r = i + 4;
+    ws[`A${r}`] = { v: i + 1,          t: 'n' };
+    ws[`B${r}`] = { v: v.vendor_name || '', t: 's' };
+    ws[`C${r}`] = { v: v.pan || '',    t: 's' };
+    ws[`D${r}`] = { v: '',             t: 's' }; // TReDS No
+    ws[`E${r}`] = { v: '',             t: 's' }; // TReDS Amt
+    ws[`F${r}`] = { v: v.d2_invoices != null ? v.d2_invoices : '', t: v.d2_invoices != null ? 'n' : 's' };
+    ws[`G${r}`] = { v: v.d2_amount   != null ? v.d2_amount   : '', t: v.d2_amount   != null ? 'n' : 's' };
+    ws[`H${r}`] = { v: v.e_invoices  != null ? v.e_invoices  : '', t: v.e_invoices  != null ? 'n' : 's' };
+    ws[`I${r}`] = { v: v.e_amount    != null ? v.e_amount    : '', t: v.e_amount    != null ? 'n' : 's' };
+    ws[`J${r}`] = { v: v.f_invoices  != null ? v.f_invoices  : '', t: v.f_invoices  != null ? 'n' : 's' };
+    ws[`K${r}`] = { v: v.f_amount    != null ? v.f_amount    : '', t: v.f_amount    != null ? 'n' : 's' };
+    ws[`L${r}`] = { v: v.g_invoices  != null ? v.g_invoices  : '', t: v.g_invoices  != null ? 'n' : 's' };
+    ws[`M${r}`] = { v: v.g_amount    != null ? v.g_amount    : '', t: v.g_amount    != null ? 'n' : 's' };
+    ws[`N${r}`] = { v: '',             t: 's' }; // Reason
+  });
+
+  // ── Sheet range ───────────────────────────────────────────────────
+  const lastRow = returnData.length + 3;
+  ws['!ref'] = `A1:N${lastRow}`;
+
+  // ── Merged cells (matching govt format) ──────────────────────────
+  ws['!merges'] = [
+    { s:{r:0,c:0},  e:{r:2,c:0}  }, // A1:A3  S.No.
+    { s:{r:0,c:1},  e:{r:2,c:1}  }, // B1:B3  Name
+    { s:{r:0,c:2},  e:{r:2,c:2}  }, // C1:C3  PAN
+    { s:{r:0,c:3},  e:{r:0,c:6}  }, // D1:G1  Paid within 45 days
+    { s:{r:1,c:3},  e:{r:1,c:4}  }, // D2:E2  Through TReDS (i)
+    { s:{r:1,c:5},  e:{r:1,c:6}  }, // F2:G2  Other mode (ii)
+    { s:{r:0,c:7},  e:{r:1,c:8}  }, // H1:I2  Paid after 45 days
+    { s:{r:0,c:9},  e:{r:1,c:10} }, // J1:K2  Outstanding <=45
+    { s:{r:0,c:11}, e:{r:1,c:12} }, // L1:M2  Outstanding >45
+    { s:{r:0,c:13}, e:{r:2,c:13} }, // N1:N3  Reason
+  ];
+
+  // ── Column widths ─────────────────────────────────────────────────
+  ws['!cols'] = [
+    { wch: 6  }, // A S.No.
+    { wch: 30 }, // B Name
+    { wch: 14 }, // C PAN
+    { wch: 10 }, // D TReDS No
+    { wch: 14 }, // E TReDS Amt
+    { wch: 10 }, // F Other No
+    { wch: 14 }, // G Other Amt
+    { wch: 10 }, // H After45 No
+    { wch: 14 }, // I After45 Amt
+    { wch: 10 }, // J Outstd<=45 No
+    { wch: 14 }, // K Outstd<=45 Amt
+    { wch: 10 }, // L Outstd>45 No
+    { wch: 14 }, // M Outstd>45 Amt
+    { wch: 35 }, // N Reason
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'MSME');
+  XLSX.writeFile(wb, 'MSME_Return_' + new Date().toISOString().split('T')[0] + '.xlsx');
+  showToast('MSME Return Excel (Govt Format) exported', 'success');
 }
 
 
