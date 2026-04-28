@@ -414,6 +414,13 @@ app.post('/api/sync/bills', async (req, res) => {
   }
   const periodEndDate = new Date(periodEnd);
 
+  // For H2: also pull H1 bills (invoice_date Apr–Sep) because a bill raised in H1
+  // but paid late (payment in H2) or still outstanding at H1-end must appear in H2 return.
+  // We expand the Odoo query start date to Apr 1 for H2, then filter after payment reconciliation.
+  const h1EndDate   = new Date(`${fyStart}-09-30`);       // Sep 30 — end of H1
+  const fyH1Start   = `${fyStart}-04-01`;                 // Apr 1  — start of full FY
+  const queryStart  = period === 'H2' ? fyH1Start : periodStart;  // H2 fetches full FY
+
   console.log(`\n📅 Bills sync | ${period} | FY ${fy} | ${periodStart} → ${periodEnd}`);
 
   try {
@@ -445,12 +452,14 @@ app.post('/api/sync/bills', async (req, res) => {
     // ── Step 2: Fetch ALL bills in the period (no extra filter) ───
     // Includes in_invoice (vendor bill) + in_refund (credit note).
     // allowed_company_ids:[] fetches across all branches (BHR/, BWB/, BKN/, etc.)
+    // For H2: queryStart = Apr 1 (full FY) so H1 bills with late/carry-forward payments
+    // are included. For H1: queryStart = periodStart (Apr 1 anyway, same result).
     const bills = await odooCall(session, 'account.move', 'search_read',
       [[
         ['move_type', 'in', ['in_invoice', 'in_refund']],
         ['state',    '=',  'posted'],
         ['partner_id', 'in', msmeIds],
-        ['invoice_date', '>=', periodStart],
+        ['invoice_date', '>=', queryStart],
         ['invoice_date', '<=', periodEnd]
       ]],
       {
@@ -663,8 +672,38 @@ app.post('/api/sync/bills', async (req, res) => {
       });
     }
 
-    console.log(`\n✅ ${workingData.length} bills returned | ${period} FY ${fy}`);
-    res.json({ ok: true, count: workingData.length, data: workingData });
+    // ── Step 9: H2 carry-forward filter ──────────────────────────
+    // When period = H2 we fetched the full FY. Now remove H1 bills that are
+    // completely settled within H1 and on-time — those belong only to H1 return.
+    // A H1 bill IS relevant to H2 if:
+    //   (a) it has at least one payment made AFTER Sep 30 (payment in H2 = late payment), OR
+    //   (b) it was not fully paid by Sep 30 (outstanding carry-forward into H2)
+    let filteredData = workingData;
+    if (period === 'H2') {
+      filteredData = workingData.filter(row => {
+        const billDate = new Date(row.bill_date);
+        if (billDate > h1EndDate) return true;  // H2 invoice — always keep
+
+        // H1 invoice: check relevance to H2
+        const hasPaymentInH2 = row.payments.some(
+          p => p.date && new Date(p.date) > h1EndDate
+        );
+        if (hasPaymentInH2) return true;        // paid (partially or fully) in H2
+
+        // Was it outstanding at H1 end?
+        const paidByH1End = row.payments
+          .filter(p => p.date && new Date(p.date) <= h1EndDate)
+          .reduce((s, p) => s + p.amount, 0);
+        const outstandingAtH1End = Math.max(0,
+          Math.round((row.bill_amount - paidByH1End) * 100) / 100
+        );
+        return outstandingAtH1End > 0.01;       // still unpaid at H1 end — carry forward
+      });
+      console.log(`  H2 carry-forward filter: ${workingData.length} total → ${filteredData.length} relevant (${workingData.length - filteredData.length} H1-fully-settled removed)`);
+    }
+
+    console.log(`\n✅ ${filteredData.length} bills returned | ${period} FY ${fy}`);
+    res.json({ ok: true, count: filteredData.length, data: filteredData });
 
   } catch (e) {
     console.error('❌ Bills error:', e.message);
