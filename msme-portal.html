@@ -76,6 +76,16 @@
   .sidebar-footer { border-top: 1px solid var(--border); padding: 12px; }
   .sidebar-footer-info { font-size: 11px; color: var(--text3); padding: 4px 0; }
 
+  /* ── Sidebar Period Selector ── */
+  .sidebar-period { padding: 10px 12px 8px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .sidebar-period-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .9px; color: var(--text3); margin-bottom: 6px; }
+  .sidebar-fy-select { width: 100%; height: 28px; font-size: 12px; border: 1px solid var(--border2); border-radius: var(--radius); padding: 0 6px; background: #fff; color: var(--text); cursor: pointer; margin-bottom: 6px; font-family: inherit; }
+  .sidebar-fy-select:focus { outline: none; border-color: var(--primary); }
+  .sidebar-half-btns { display: flex; gap: 4px; }
+  .sidebar-half-btn { flex: 1; height: 28px; font-size: 11px; font-weight: 600; border: 1px solid var(--border2); background: #fff; color: var(--text2); cursor: pointer; border-radius: var(--radius); transition: all .12s; font-family: inherit; letter-spacing: .3px; }
+  .sidebar-half-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .sidebar-half-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
   /* ── Command Buttons ── */
   .cmd-btn { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: none; background: transparent; color: var(--text); font-size: 13px; cursor: pointer; border-radius: var(--radius); transition: background .15s; white-space: nowrap; width: 100%; text-align: left; }
   .cmd-btn:hover { background: var(--primary-light); color: var(--primary); }
@@ -337,6 +347,22 @@
 
   <!-- ░░ LEFT SIDEBAR ░░ -->
   <div class="sidebar">
+
+    <!-- ── Period Selector (always visible) ── -->
+    <div class="sidebar-period">
+      <div class="sidebar-period-label">📅 Filing Period</div>
+      <select class="sidebar-fy-select" id="sidebarFySelect" onchange="onSidebarFyChange(this.value)">
+        <option value="2025-26">FY 2025-26</option>
+        <option value="2024-25" selected>FY 2024-25</option>
+        <option value="2023-24">FY 2023-24</option>
+        <option value="2022-23">FY 2022-23</option>
+      </select>
+      <div class="sidebar-half-btns">
+        <button class="sidebar-half-btn active" id="sidebarH1Btn" onclick="onSidebarPeriodChange('H1')">H1 · Apr–Sep</button>
+        <button class="sidebar-half-btn"        id="sidebarH2Btn" onclick="onSidebarPeriodChange('H2')">H2 · Oct–Mar</button>
+      </div>
+    </div>
+
     <div class="sidebar-cmd">
       <button class="cmd-btn primary" onclick="syncOdoo()">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
@@ -1567,18 +1593,45 @@ function switchTab(id) {
 }
 
 // ══════════════════════════════════════════════
+//  SIDEBAR PERIOD SELECTOR
+// ══════════════════════════════════════════════
+function onSidebarFyChange(fy) {
+  state.currentFY = fy;
+  const wFy = document.getElementById('fySelect');
+  if (wFy) wFy.value = fy;
+  document.getElementById('activePeriodBadge').textContent = `FY ${fy} | ${state.currentPeriod}`;
+  renderWorking();
+}
+function onSidebarPeriodChange(p) {
+  state.currentPeriod = p;
+  document.getElementById('sidebarH1Btn').classList.toggle('active', p === 'H1');
+  document.getElementById('sidebarH2Btn').classList.toggle('active', p === 'H2');
+  document.getElementById('periodBtn1')?.classList.toggle('active', p === 'H1');
+  document.getElementById('periodBtn2')?.classList.toggle('active', p === 'H2');
+  const fy = state.currentFY || document.getElementById('sidebarFySelect').value || '2024-25';
+  document.getElementById('activePeriodBadge').textContent = `FY ${fy} | ${p}`;
+  renderWorking();
+}
+
+// ══════════════════════════════════════════════
 //  PERIOD
 // ══════════════════════════════════════════════
 function selectPeriod(p) {
   state.currentPeriod = p;
   document.getElementById('periodBtn1').classList.toggle('active', p==='H1');
   document.getElementById('periodBtn2').classList.toggle('active', p==='H2');
+  document.getElementById('sidebarH1Btn')?.classList.toggle('active', p==='H1');
+  document.getElementById('sidebarH2Btn')?.classList.toggle('active', p==='H2');
   const fy = document.getElementById('fySelect').value;
+  state.currentFY = fy;
   document.getElementById('activePeriodBadge').textContent = `FY ${fy} | ${p}`;
   recalcWorking();
 }
 function recalcWorking() {
   const fy = document.getElementById('fySelect').value;
+  state.currentFY = fy;
+  const sidebarFy = document.getElementById('sidebarFySelect');
+  if (sidebarFy) sidebarFy.value = fy;
   document.getElementById('activePeriodBadge').textContent = `FY ${fy} | ${state.currentPeriod}`;
   renderWorking();
 }
@@ -1810,7 +1863,7 @@ async function syncOdoo() {
     }
 
     // Sync Bills
-    const fy     = document.getElementById('fySelect')?.value || '2024-25';
+    const fy     = state.currentFY || document.getElementById('sidebarFySelect')?.value || '2024-25';
     const period = state.currentPeriod || 'H1';
     showToast(`Fetching bills for FY ${fy} | ${period}...`, 'info');
     const billsRes = await callProxy('/api/sync/bills', { period, fy });
@@ -1845,54 +1898,113 @@ async function syncOdoo() {
 //  EXPORT CSV
 // ══════════════════════════════════════════════
 function exportCSV() {
-  // Bug fix #7: null-safe active tab detection
+  // Null-safe active tab detection
   const activeTabEl = document.querySelector('.page.active');
   const activeTab = activeTabEl ? activeTabEl.id : '';
   let headers, rows;
 
   if (activeTab === 'tab-msme-db') {
     headers = ['S No','Vendor Name','Vendor Code','PAN','MSME Status','MSME Type','Udyam No','Registration Date'];
-    rows = state.msmeData.map((v,i) => [i+1, v.vendor_name, v.vendor_code, v.pan, v.msme_status, v.msme_type, v.udyam_no, v.reg_date]);
+    rows = state.msmeData.map((v,i) => [i+1,v.vendor_name,v.vendor_code,v.pan,v.msme_status,v.msme_type,v.udyam_no,v.reg_date]);
 
   } else if (activeTab === 'tab-vendor-master') {
     headers = ['S No','Vendor Name','Vendor Code','PAN','GSTIN','MSME Type','Udyam No','State'];
-    rows = state.vendorData.map((v,i) => [i+1, v.vendor_name, v.vendor_code, v.pan, v.gstin, v.msme_type, v.udyam_no, v.state]);
+    rows = state.vendorData.map((v,i) => [i+1,v.vendor_name,v.vendor_code,v.pan,v.gstin,v.msme_type,v.udyam_no,v.state]);
 
   } else {
-    // Bug fix #1 & #2: expand each bill into one row per payment, include payment dates/refs/amounts and disallowable
+    // ── Working data: one row per payment, MCA return columns (d/e/f/g/h) per bill ──
+
+    // Period-end date for (f)/(g) classification — fixed to period, not today
+    const fyYear = parseInt((state.currentFY || '2024-25').split('-')[0]);
+    const periodEndStr = state.currentPeriod === 'H1'
+      ? `${fyYear}-09-30`
+      : `${fyYear + 1}-03-31`;
+    const periodEndDate = new Date(periodEndStr);
+
     headers = [
-      'S No','Vendor Name','MSME Type','Bill No','Ref No',
-      'Bill Date','Due Date (MSME 45d)',
-      'Bill Amount','Payment Ref','Payment Date','Payment Amount',
-      'Total Paid','Outstanding','Disallowable (43B-h)','Status'
+      // Basic bill info
+      'S No', 'Vendor Name', 'MSME Type', 'Bill No', 'Ref No',
+      'Bill Date', 'Due Date (MSME 45d)',
+      'Bill Amount (₹)',
+      // Payment detail (one row per payment)
+      'Payment Ref', 'Payment Date', 'Payment Amount (₹)',
+      // Bill totals (first payment row only)
+      'Total Paid (₹)', 'Outstanding (₹)', 'Disallowable 43B(h) (₹)', 'Status',
+      // ── MCA Return columns (bill-level, first payment row) ──
+      '(d)(i) TReDS No.', '(d)(i) TReDS Amt (₹)',
+      '(d)(ii) Other Mode No.', '(d)(ii) Other Mode Amt (₹)',
+      '(e) Paid After 45d No.', '(e) Paid After 45d Amt (₹)',
+      '(f) Outstanding ≤45d No.', '(f) Outstanding ≤45d Amt (₹)',
+      '(g) Outstanding >45d No.', '(g) Outstanding >45d Amt (₹)',
+      '(h) Reason for Delay'
     ];
+
     rows = [];
     let sno = 0;
+
     state.workingData.forEach(b => {
       sno++;
+      const dueDate = new Date(b.due_date);
+
+      // ── (d)/(e): split payments by on-time vs late ──
+      let paidWithin45 = 0, paidAfter45 = 0;
+      (b.payments || []).forEach(p => {
+        if (!p.date) return;
+        if (new Date(p.date) <= dueDate) paidWithin45 += p.amount;
+        else                             paidAfter45  += p.amount;
+      });
+      paidWithin45 = Math.round(paidWithin45 * 100) / 100;
+      paidAfter45  = Math.round(paidAfter45  * 100) / 100;
+
+      // ── (f)/(g): outstanding at period end, classified by whether due date crossed ──
+      let outstandingAtPE = b.outstanding_as_of_period_end;
+      if (outstandingAtPE == null) {
+        const paidByPE = (b.payments || [])
+          .filter(p => p.date && new Date(p.date) <= periodEndDate)
+          .reduce((s, p) => s + p.amount, 0);
+        outstandingAtPE = Math.max(0, Math.round((b.bill_amount - paidByPE) * 100) / 100);
+      }
+      const daysOverdueAtPE = Math.floor((periodEndDate - dueDate) / 86400000);
+      const hasOutstanding  = outstandingAtPE > 0.01;
+
+      // MCA columns — bill level (only on first payment row)
+      const d1_no  = '';                                          // TReDS — always blank
+      const d1_amt = '';
+      const d2_no  = paidWithin45 > 0 ? 1 : '';
+      const d2_amt = paidWithin45 > 0 ? paidWithin45 : '';
+      const e_no   = paidAfter45  > 0 ? 1 : '';
+      const e_amt  = paidAfter45  > 0 ? paidAfter45  : '';
+      const f_no   = (hasOutstanding && daysOverdueAtPE <= 0) ? 1 : '';
+      const f_amt  = (hasOutstanding && daysOverdueAtPE <= 0) ? outstandingAtPE : '';
+      const g_no   = (hasOutstanding && daysOverdueAtPE >  0) ? 1 : '';
+      const g_amt  = (hasOutstanding && daysOverdueAtPE >  0) ? outstandingAtPE : '';
+      const h      = '';  // Reason for delay — blank for manual entry
+
+      const mcaCols     = [d1_no, d1_amt, d2_no, d2_amt, e_no, e_amt, f_no, f_amt, g_no, g_amt, h];
+      const mcaColsBl   = Array(11).fill('');  // blank MCA for continuation rows
+
       if (!b.payments || b.payments.length === 0) {
-        // No payments — single row with blanks for payment columns
         rows.push([
           sno, b.vendor_name, b.msme_type, b.bill_no, b.ref_no || '',
-          b.bill_date, b.due_date,
-          b.bill_amount, '', '', '',
-          b.total_paid, b.outstanding, b.disallowable || 0, b.status
+          b.bill_date, b.due_date, b.bill_amount,
+          '', '', '',
+          b.total_paid, b.outstanding, b.disallowable || 0, b.status,
+          ...mcaCols
         ]);
       } else {
-        // One row per payment — bill-level fields repeat, payment-level fields change
         b.payments.forEach((p, pi) => {
+          const isFirst = pi === 0;
           rows.push([
-            pi === 0 ? sno : '',          // S No only on first payment row
+            isFirst ? sno : '',
             b.vendor_name, b.msme_type, b.bill_no, b.ref_no || '',
             b.bill_date, b.due_date,
-            pi === 0 ? b.bill_amount : '', // Bill Amount only on first row
-            p.ref  || '',                  // Payment Ref  ← was missing
-            p.date || '',                  // Payment Date ← was missing
-            p.amount || 0,                 // Payment Amount ← was missing
-            pi === 0 ? b.total_paid : '',
-            pi === 0 ? b.outstanding : '',
-            pi === 0 ? (b.disallowable || 0) : '',  // Disallowable ← was missing
-            pi === 0 ? b.status : ''
+            isFirst ? b.bill_amount : '',
+            p.ref  || '', p.date || '', p.amount || 0,
+            isFirst ? b.total_paid   : '',
+            isFirst ? b.outstanding  : '',
+            isFirst ? (b.disallowable || 0) : '',
+            isFirst ? b.status : '',
+            ...(isFirst ? mcaCols : mcaColsBl)
           ]);
         });
       }
@@ -1900,8 +2012,8 @@ function exportCSV() {
   }
 
   const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
-  download('MSME_Export_' + new Date().toISOString().split('T')[0] + '.csv', csv, 'text/csv');
-  showToast('CSV exported', 'success');
+  download('MSME_Working_' + (state.currentFY||'') + '_' + (state.currentPeriod||'') + '_' + new Date().toISOString().split('T')[0] + '.csv', csv, 'text/csv');
+  showToast('CSV exported with MCA return columns', 'success');
 }
 
 function exportMSME1() { generateMSME1(); switchTab('msme1-draft'); }
@@ -1987,8 +2099,7 @@ function generateMSMEReturn() {
     showToast('No working data — sync from Odoo first', 'error'); return;
   }
 
-  // Bug fix #5 & #6: derive fixed period-end date so (f)/(g) classification is stable,
-  // and use outstanding_as_of_period_end instead of live outstanding.
+  // Fixed period-end date so (f)/(g) classification is stable and auditable
   const fyYear = parseInt((state.currentFY || '2024-25').split('-')[0]);
   const periodEndStr = state.currentPeriod === 'H1'
     ? `${fyYear}-09-30`
@@ -2006,54 +2117,38 @@ function generateMSMEReturn() {
         pan: ms.pan || '—',
         udyam_no: ms.udyam_no || '',
         msme_type: b.msme_type,
-        // (d)(ii) paid within 45 days — other mode
         d2_invoices: 0, d2_amount: 0,
-        // (e) paid after 45 days
         e_invoices: 0,  e_amount: 0,
-        // (f) outstanding <= 45 days (due date not yet crossed as of period end)
         f_invoices: 0,  f_amount: 0,
-        // (g) outstanding > 45 days
         g_invoices: 0,  g_amount: 0,
       };
     }
     const v = vendors[key];
     const dueDate = new Date(b.due_date);
 
-    // Payments made within 45 days (payment date <= due date)
-    let paidWithin45 = 0;
-    let paidAfter45  = 0;
-
+    let paidWithin45 = 0, paidAfter45 = 0;
     b.payments.forEach(p => {
       if (!p.date) return;
-      const pd = new Date(p.date);
-      if (pd <= dueDate) {
-        paidWithin45 += p.amount;
-      } else {
-        paidAfter45  += p.amount;
-      }
+      if (new Date(p.date) <= dueDate) paidWithin45 += p.amount;
+      else                             paidAfter45  += p.amount;
     });
 
     if (paidWithin45 > 0) { v.d2_amount += paidWithin45; v.d2_invoices += 1; }
     if (paidAfter45  > 0) { v.e_amount  += paidAfter45;  v.e_invoices  += 1; }
 
-    // Bug fix #5 & #6: use outstanding_as_of_period_end and periodEndDate for (f)/(g)
-    // outstanding_as_of_period_end is from server; fall back to computing from payments if absent
-    let outstandingAtPeriodEnd = b.outstanding_as_of_period_end;
-    if (outstandingAtPeriodEnd == null) {
-      const paidByPeriodEnd = (b.payments || [])
+    // Use server-computed outstanding at period end; fall back to client calculation
+    let outstandingAtPE = b.outstanding_as_of_period_end;
+    if (outstandingAtPE == null) {
+      const paidByPE = (b.payments || [])
         .filter(p => p.date && new Date(p.date) <= periodEndDate)
         .reduce((s, p) => s + p.amount, 0);
-      outstandingAtPeriodEnd = Math.max(0, Math.round((b.bill_amount - paidByPeriodEnd) * 100) / 100);
+      outstandingAtPE = Math.max(0, Math.round((b.bill_amount - paidByPE) * 100) / 100);
     }
 
-    if (outstandingAtPeriodEnd > 0.01) {
-      // Bug fix #5: compare dueDate against fixed periodEndDate, not today
-      const daysOverdueAtPeriodEnd = Math.floor((periodEndDate - dueDate) / 86400000);
-      if (daysOverdueAtPeriodEnd <= 0) {
-        v.f_invoices += 1; v.f_amount += outstandingAtPeriodEnd;  // ≤ 45 days
-      } else {
-        v.g_invoices += 1; v.g_amount += outstandingAtPeriodEnd;  // > 45 days
-      }
+    if (outstandingAtPE > 0.01) {
+      const daysOverdueAtPE = Math.floor((periodEndDate - dueDate) / 86400000);
+      if (daysOverdueAtPE <= 0) { v.f_invoices += 1; v.f_amount += outstandingAtPE; }
+      else                       { v.g_invoices += 1; v.g_amount += outstandingAtPE; }
     }
   });
 
@@ -2255,7 +2350,7 @@ function buildPaymentRows() {
         rows.push({
           vendor_name:    bill.vendor_name,
           bill_no:        bill.bill_no,
-          payment_ref:    p.ref  || '—',   // Bug fix #3: was missing
+          payment_ref:    p.ref  || '—',
           payment_date:   p.date || '—',
           payment_amount: p.amount || 0
         });
@@ -2321,7 +2416,6 @@ function renderPaymentPage(page) {
       '<td class="sno">' + (start + i + 1) + '</td>' +
       '<td><strong>' + r.vendor_name + '</strong></td>' +
       '<td style="font-family:monospace;font-size:12px;color:var(--primary)">' + r.bill_no + '</td>' +
-      '<td style="font-family:monospace;font-size:12px;color:var(--text2)">' + r.payment_ref + '</td>' +  // Bug fix #4
       '<td style="font-family:monospace;font-size:12px">' + r.payment_date + '</td>' +
       '<td class="amt cr" style="font-size:13px">\u20B9' + fmt(r.payment_amount) + '</td>' +
       '</tr>';
@@ -2364,9 +2458,9 @@ function changePaymentPageSize(val) {
 
 function exportPaymentsCSV() {
   if (!payState.filtered.length) { showToast('No payment data to export', 'error'); return; }
-  const headers = ['S.No.', 'Name of Vendor', 'Bill No', 'Payment Ref', 'Payment Date', 'Payment Amount'];  // Bug fix #4
+  const headers = ['S.No.', 'Name of Vendor', 'Bill No', 'Payment Date', 'Payment Amount'];
   const rows = payState.filtered.map(function(r, i) {
-    return [i+1, r.vendor_name, r.bill_no, r.payment_ref, r.payment_date, r.payment_amount];
+    return [i+1, r.vendor_name, r.bill_no, r.payment_date, r.payment_amount];
   });
   const csv = [headers.join(','), ...rows.map(r => r.map(c => '"' + c + '"').join(','))].join('\n');
   download('Payments_' + new Date().toISOString().split('T')[0] + '.csv', csv, 'text/csv');
