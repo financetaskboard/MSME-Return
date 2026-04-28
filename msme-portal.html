@@ -794,6 +794,7 @@
             <th class="sno" style="width:55px">S.No.</th>
             <th style="min-width:220px">Name of Vendor</th>
             <th style="min-width:170px">Bill No.</th>
+            <th style="min-width:170px">Payment Ref</th>
             <th style="min-width:140px">Payment Date</th>
             <th style="min-width:160px;text-align:right">Payment Amount (&#x20B9;)</th>
           </tr>
@@ -801,7 +802,7 @@
         <tbody id="paymentsBody"></tbody>
         <tfoot id="paymentsFoot" style="display:none">
           <tr style="background:#f3f2f1;font-weight:700">
-            <td colspan="4" style="padding:8px 10px;text-align:right;border-top:2px solid #999;font-size:12px">GRAND TOTAL</td>
+            <td colspan="5" style="padding:8px 10px;text-align:right;border-top:2px solid #999;font-size:12px">GRAND TOTAL</td>
             <td style="padding:8px 10px;text-align:right;border-top:2px solid #999;font-size:13px;color:var(--success);font-family:monospace" id="pay-foot-total">&#x20B9;0</td>
           </tr>
         </tfoot>
@@ -1844,22 +1845,62 @@ async function syncOdoo() {
 //  EXPORT CSV
 // ══════════════════════════════════════════════
 function exportCSV() {
-  const activeTab = document.querySelector('.page.active').id;
+  // Bug fix #7: null-safe active tab detection
+  const activeTabEl = document.querySelector('.page.active');
+  const activeTab = activeTabEl ? activeTabEl.id : '';
   let headers, rows;
 
-  if(activeTab==='tab-msme-db') {
+  if (activeTab === 'tab-msme-db') {
     headers = ['S No','Vendor Name','Vendor Code','PAN','MSME Status','MSME Type','Udyam No','Registration Date'];
-    rows = state.msmeData.map((v,i)=>[i+1,v.vendor_name,v.vendor_code,v.pan,v.msme_status,v.msme_type,v.udyam_no,v.reg_date]);
-  } else if(activeTab==='tab-vendor-master') {
+    rows = state.msmeData.map((v,i) => [i+1, v.vendor_name, v.vendor_code, v.pan, v.msme_status, v.msme_type, v.udyam_no, v.reg_date]);
+
+  } else if (activeTab === 'tab-vendor-master') {
     headers = ['S No','Vendor Name','Vendor Code','PAN','GSTIN','MSME Type','Udyam No','State'];
-    rows = state.vendorData.map((v,i)=>[i+1,v.vendor_name,v.vendor_code,v.pan,v.gstin,v.msme_type,v.udyam_no,v.state]);
+    rows = state.vendorData.map((v,i) => [i+1, v.vendor_name, v.vendor_code, v.pan, v.gstin, v.msme_type, v.udyam_no, v.state]);
+
   } else {
-    headers = ['S No','Vendor Name','MSME Type','Bill No','Ref No','Bill Date','Due Date (MSME)','Bill Amount','Total Paid','Outstanding','Status'];
-    rows = state.workingData.map((b,i)=>[i+1,b.vendor_name,b.msme_type,b.bill_no,b.ref_no,b.bill_date,b.due_date,b.bill_amount,b.total_paid,b.outstanding,b.status]);
+    // Bug fix #1 & #2: expand each bill into one row per payment, include payment dates/refs/amounts and disallowable
+    headers = [
+      'S No','Vendor Name','MSME Type','Bill No','Ref No',
+      'Bill Date','Due Date (MSME 45d)',
+      'Bill Amount','Payment Ref','Payment Date','Payment Amount',
+      'Total Paid','Outstanding','Disallowable (43B-h)','Status'
+    ];
+    rows = [];
+    let sno = 0;
+    state.workingData.forEach(b => {
+      sno++;
+      if (!b.payments || b.payments.length === 0) {
+        // No payments — single row with blanks for payment columns
+        rows.push([
+          sno, b.vendor_name, b.msme_type, b.bill_no, b.ref_no || '',
+          b.bill_date, b.due_date,
+          b.bill_amount, '', '', '',
+          b.total_paid, b.outstanding, b.disallowable || 0, b.status
+        ]);
+      } else {
+        // One row per payment — bill-level fields repeat, payment-level fields change
+        b.payments.forEach((p, pi) => {
+          rows.push([
+            pi === 0 ? sno : '',          // S No only on first payment row
+            b.vendor_name, b.msme_type, b.bill_no, b.ref_no || '',
+            b.bill_date, b.due_date,
+            pi === 0 ? b.bill_amount : '', // Bill Amount only on first row
+            p.ref  || '',                  // Payment Ref  ← was missing
+            p.date || '',                  // Payment Date ← was missing
+            p.amount || 0,                 // Payment Amount ← was missing
+            pi === 0 ? b.total_paid : '',
+            pi === 0 ? b.outstanding : '',
+            pi === 0 ? (b.disallowable || 0) : '',  // Disallowable ← was missing
+            pi === 0 ? b.status : ''
+          ]);
+        });
+      }
+    });
   }
 
-  const csv = [headers.join(','), ...rows.map(r=>r.map(c=>`"${c}"`).join(','))].join('\n');
-  download('MSME_Export_'+new Date().toISOString().split('T')[0]+'.csv', csv, 'text/csv');
+  const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+  download('MSME_Export_' + new Date().toISOString().split('T')[0] + '.csv', csv, 'text/csv');
   showToast('CSV exported', 'success');
 }
 
@@ -1946,6 +1987,14 @@ function generateMSMEReturn() {
     showToast('No working data — sync from Odoo first', 'error'); return;
   }
 
+  // Bug fix #5 & #6: derive fixed period-end date so (f)/(g) classification is stable,
+  // and use outstanding_as_of_period_end instead of live outstanding.
+  const fyYear = parseInt((state.currentFY || '2024-25').split('-')[0]);
+  const periodEndStr = state.currentPeriod === 'H1'
+    ? `${fyYear}-09-30`
+    : `${fyYear + 1}-03-31`;
+  const periodEndDate = new Date(periodEndStr);
+
   // Group bills by vendor
   const vendors = {};
   working.forEach(b => {
@@ -1961,7 +2010,7 @@ function generateMSMEReturn() {
         d2_invoices: 0, d2_amount: 0,
         // (e) paid after 45 days
         e_invoices: 0,  e_amount: 0,
-        // (f) outstanding <= 45 days (due date not yet crossed)
+        // (f) outstanding <= 45 days (due date not yet crossed as of period end)
         f_invoices: 0,  f_amount: 0,
         // (g) outstanding > 45 days
         g_invoices: 0,  g_amount: 0,
@@ -1969,11 +2018,10 @@ function generateMSMEReturn() {
     }
     const v = vendors[key];
     const dueDate = new Date(b.due_date);
-    const today   = new Date();
 
     // Payments made within 45 days (payment date <= due date)
-    let paidWithin45 = 0, invoiceCountedWithin = false;
-    let paidAfter45  = 0, invoiceCountedAfter  = false;
+    let paidWithin45 = 0;
+    let paidAfter45  = 0;
 
     b.payments.forEach(p => {
       if (!p.date) return;
@@ -1988,13 +2036,23 @@ function generateMSMEReturn() {
     if (paidWithin45 > 0) { v.d2_amount += paidWithin45; v.d2_invoices += 1; }
     if (paidAfter45  > 0) { v.e_amount  += paidAfter45;  v.e_invoices  += 1; }
 
-    // Outstanding
-    if (b.outstanding > 0.01) {
-      const daysOverdue = Math.floor((today - dueDate) / 86400000);
-      if (daysOverdue <= 0) {
-        v.f_invoices += 1; v.f_amount += b.outstanding;
+    // Bug fix #5 & #6: use outstanding_as_of_period_end and periodEndDate for (f)/(g)
+    // outstanding_as_of_period_end is from server; fall back to computing from payments if absent
+    let outstandingAtPeriodEnd = b.outstanding_as_of_period_end;
+    if (outstandingAtPeriodEnd == null) {
+      const paidByPeriodEnd = (b.payments || [])
+        .filter(p => p.date && new Date(p.date) <= periodEndDate)
+        .reduce((s, p) => s + p.amount, 0);
+      outstandingAtPeriodEnd = Math.max(0, Math.round((b.bill_amount - paidByPeriodEnd) * 100) / 100);
+    }
+
+    if (outstandingAtPeriodEnd > 0.01) {
+      // Bug fix #5: compare dueDate against fixed periodEndDate, not today
+      const daysOverdueAtPeriodEnd = Math.floor((periodEndDate - dueDate) / 86400000);
+      if (daysOverdueAtPeriodEnd <= 0) {
+        v.f_invoices += 1; v.f_amount += outstandingAtPeriodEnd;  // ≤ 45 days
       } else {
-        v.g_invoices += 1; v.g_amount += b.outstanding;
+        v.g_invoices += 1; v.g_amount += outstandingAtPeriodEnd;  // > 45 days
       }
     }
   });
@@ -2195,9 +2253,10 @@ function buildPaymentRows() {
     if (bill.payments && bill.payments.length > 0) {
       bill.payments.forEach(p => {
         rows.push({
-          vendor_name: bill.vendor_name,
-          bill_no: bill.bill_no,
-          payment_date: p.date || '—',
+          vendor_name:    bill.vendor_name,
+          bill_no:        bill.bill_no,
+          payment_ref:    p.ref  || '—',   // Bug fix #3: was missing
+          payment_date:   p.date || '—',
           payment_amount: p.amount || 0
         });
       });
@@ -2262,6 +2321,7 @@ function renderPaymentPage(page) {
       '<td class="sno">' + (start + i + 1) + '</td>' +
       '<td><strong>' + r.vendor_name + '</strong></td>' +
       '<td style="font-family:monospace;font-size:12px;color:var(--primary)">' + r.bill_no + '</td>' +
+      '<td style="font-family:monospace;font-size:12px;color:var(--text2)">' + r.payment_ref + '</td>' +  // Bug fix #4
       '<td style="font-family:monospace;font-size:12px">' + r.payment_date + '</td>' +
       '<td class="amt cr" style="font-size:13px">\u20B9' + fmt(r.payment_amount) + '</td>' +
       '</tr>';
@@ -2304,9 +2364,9 @@ function changePaymentPageSize(val) {
 
 function exportPaymentsCSV() {
   if (!payState.filtered.length) { showToast('No payment data to export', 'error'); return; }
-  const headers = ['S.No.', 'Name of Vendor', 'Bill No', 'Payment Date', 'Payment Amount'];
+  const headers = ['S.No.', 'Name of Vendor', 'Bill No', 'Payment Ref', 'Payment Date', 'Payment Amount'];  // Bug fix #4
   const rows = payState.filtered.map(function(r, i) {
-    return [i+1, r.vendor_name, r.bill_no, r.payment_date, r.payment_amount];
+    return [i+1, r.vendor_name, r.bill_no, r.payment_ref, r.payment_date, r.payment_amount];
   });
   const csv = [headers.join(','), ...rows.map(r => r.map(c => '"' + c + '"').join(','))].join('\n');
   download('Payments_' + new Date().toISOString().split('T')[0] + '.csv', csv, 'text/csv');
